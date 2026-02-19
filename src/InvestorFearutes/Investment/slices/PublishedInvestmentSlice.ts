@@ -1,74 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "@/services/api";
 
-// ---------- Types ----------
-export interface InvestorInfo {
-  userId: string;
-  amount: number;
-  date: string;
-  status?: string;
-}
-
-export interface Investment {
-  _id: string;
-  title: string;
-  description: string;
-  businessName: string;
-  sector: string;
-  fundingGoal: number;
-  currentFunding: number;
-  minimumInvestment: number;
-  expectedReturn: number;
-  investmentPeriod: number;
-  status: string;
-  riskFactors: string;
-  useOfFunds: string;
-  businessPlan: string;
-  isVerified: boolean;
-  fundingProgress: number;
-  remainingAmount: number;
-  businessOwnerId?: {
-    _id: string;
-    email: string;
-  };
-  investments?: Array<{
-    investorId: string;
-    amount: number;
-    investmentDate: string;
-    status: string;
-  }>;
-  // Track user-specific investment data
-  hasUserInvested?: boolean;
-  userInvestmentAmount?: number;
-  userInvestmentDate?: string;
-  investedBy?: InvestorInfo[];
-  isFullyFunded?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface PortfolioInvestment {
-  investmentId: string;
-  title: string;
-  businessName: string;
-  businessOwnerName: string;
-  businessOwnerEmail: string;
-  sector: string;
-  location: string;
-  myInvestmentAmount: number;
-  investmentDate: string;
-  expectedReturn: number;
-  investmentPeriod: number;
-  fundingGoal: number;
-  currentFunding: number;
-  fundingProgress: string;
-  remainingAmount: number;
-  totalInvestors: number;
-  investmentStatus: string;
-  isFullyFunded: boolean;
-}
-
-export interface PortfolioSummary {
+import type { Investment, PortfolioInvestment } from "../types/InvestmentTypes";
+interface PortfolioSummary {
   totalInvested: number;
   activeInvestments: number;
   totalInvestments: number;
@@ -85,9 +19,9 @@ interface Pagination {
 interface PublishedState {
   list: Investment[];
   selected: Investment | null;
-  myPortfolio: PortfolioInvestment[];
+  myPortfolio: PortfolioInvestment[]; // For portfolio
   portfolioSummary: PortfolioSummary | null;
-  investedIds: Set<string>; // Track which investment IDs user has invested in
+  investedIds: string[]; // Track which investments user has invested in
   loading: boolean;
   investing: boolean;
   error: string | null;
@@ -100,7 +34,7 @@ const initialState: PublishedState = {
   selected: null,
   myPortfolio: [],
   portfolioSummary: null,
-  investedIds: new Set(),
+  investedIds: [],
   loading: false,
   investing: false,
   error: null,
@@ -108,17 +42,17 @@ const initialState: PublishedState = {
   pagination: { page: 1, limit: 20, total: 0, pages: 1 },
 };
 
-// Get current user from localStorage helper
-const getCurrentUserId = (): string | null => {
+// Helper to get current user
+const getCurrentUser = () => {
   try {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    return user._id || null;
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) : null;
   } catch {
     return null;
   }
 };
 
-// Invest in opportunity
+// 1️⃣ POST /api/v1/investments/:id/invest - Make investment
 export const investInOpportunity = createAsyncThunk(
   "published/invest",
   async ({
@@ -157,7 +91,7 @@ export const investInOpportunity = createAsyncThunk(
   },
 );
 
-// Fetch all investments (Public)
+// 2️⃣ GET /api/v1/investments - Browse opportunities (Public)
 export const fetchInvestments = createAsyncThunk(
   "published/fetchAll",
   async (
@@ -187,7 +121,7 @@ export const fetchInvestments = createAsyncThunk(
   },
 );
 
-// Fetch investment by ID (Public)
+// 3️⃣ GET /api/v1/investments/:id - Get opportunity details (Public)
 export const fetchInvestmentById = createAsyncThunk(
   "published/fetchById",
   async (id: string) => {
@@ -199,7 +133,7 @@ export const fetchInvestmentById = createAsyncThunk(
   },
 );
 
-// Fetch user portfolio
+// 4️⃣ GET /api/v1/investments/my-portfolio - Get user investments
 export const fetchMyPortfolio = createAsyncThunk(
   "published/fetchMyPortfolio",
   async () => {
@@ -216,26 +150,6 @@ export const fetchMyPortfolio = createAsyncThunk(
         averageReturn: 0,
       },
     };
-  },
-);
-
-// Fetch sectors
-export const fetchSectors = createAsyncThunk(
-  "published/fetchSectors",
-  async () => {
-    console.log("📡 Fetching sectors");
-    const response = await api.get("/api/v1/investments/sectors");
-    return response.data.sectors || response.data;
-  },
-);
-
-// Fetch investment stats
-export const fetchInvestmentStats = createAsyncThunk(
-  "published/fetchStats",
-  async () => {
-    console.log("📡 Fetching investment stats");
-    const response = await api.get("/api/v1/investments/stats");
-    return response.data.stats || response.data;
   },
 );
 
@@ -258,31 +172,6 @@ const publishedInvestmentSlice = createSlice({
     resetSuccess: (state) => {
       state.success = false;
     },
-    // Manually mark an investment as invested (useful for testing)
-    markAsInvested: (state, action) => {
-      const { investmentId, amount } = action.payload;
-      const userId = getCurrentUserId();
-
-      if (!userId) return;
-
-      state.investedIds.add(investmentId);
-
-      const investment = state.list.find((inv) => inv._id === investmentId);
-      if (investment) {
-        investment.hasUserInvested = true;
-        investment.userInvestmentAmount = amount;
-        investment.userInvestmentDate = new Date().toISOString();
-
-        if (!investment.investedBy) {
-          investment.investedBy = [];
-        }
-        investment.investedBy.push({
-          userId,
-          amount,
-          date: new Date().toISOString(),
-        });
-      }
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -296,10 +185,13 @@ const publishedInvestmentSlice = createSlice({
         state.list = action.payload.investments;
         state.pagination = action.payload.pagination;
 
-        // Reset invested flags - will be updated by portfolio fetch
+        // Mark which investments user has invested in
         state.list = state.list.map((inv) => ({
           ...inv,
-          hasUserInvested: state.investedIds.has(inv._id),
+          hasUserInvested: state.investedIds.includes(inv._id),
+          userInvestmentAmount: state.myPortfolio.find(
+            (p) => p.investmentId === inv._id,
+          )?.myInvestmentAmount,
         }));
 
         state.error = null;
@@ -318,7 +210,10 @@ const publishedInvestmentSlice = createSlice({
         state.loading = false;
         state.selected = {
           ...action.payload,
-          hasUserInvested: state.investedIds.has(action.payload._id),
+          hasUserInvested: state.investedIds.includes(action.payload._id),
+          userInvestmentAmount: state.myPortfolio.find(
+            (p) => p.investmentId === action.payload._id,
+          )?.myInvestmentAmount,
         };
         state.error = null;
       })
@@ -340,12 +235,11 @@ const publishedInvestmentSlice = createSlice({
         state.error = null;
 
         const { investmentId, amount } = action.payload;
-        const userId = getCurrentUserId();
 
-        if (!userId) return;
-
-        // Add to investedIds Set
-        state.investedIds.add(investmentId);
+        // Add to investedIds if not already there
+        if (!state.investedIds.includes(investmentId)) {
+          state.investedIds.push(investmentId);
+        }
 
         // Update the investment in the list
         const index = state.list.findIndex((inv) => inv._id === investmentId);
@@ -356,28 +250,12 @@ const publishedInvestmentSlice = createSlice({
             100;
           state.list[index].remainingAmount =
             state.list[index].fundingGoal - state.list[index].currentFunding;
-
-          // Mark that current user has invested
           state.list[index].hasUserInvested = true;
           state.list[index].userInvestmentAmount = amount;
           state.list[index].userInvestmentDate = new Date().toISOString();
-
-          // Add to investedBy array
-          if (!state.list[index].investedBy) {
-            state.list[index].investedBy = [];
-          }
-          state.list[index].investedBy.push({
-            userId,
-            amount,
-            date: new Date().toISOString(),
-          });
-
-          // Check if fully funded
-          state.list[index].isFullyFunded =
-            state.list[index].currentFunding >= state.list[index].fundingGoal;
         }
 
-        // Update selected investment if it's the same
+        // Update the selected investment
         if (state.selected && state.selected._id === investmentId) {
           state.selected.currentFunding += amount;
           state.selected.fundingProgress =
@@ -387,18 +265,6 @@ const publishedInvestmentSlice = createSlice({
           state.selected.hasUserInvested = true;
           state.selected.userInvestmentAmount = amount;
           state.selected.userInvestmentDate = new Date().toISOString();
-
-          if (!state.selected.investedBy) {
-            state.selected.investedBy = [];
-          }
-          state.selected.investedBy.push({
-            userId,
-            amount,
-            date: new Date().toISOString(),
-          });
-
-          state.selected.isFullyFunded =
-            state.selected.currentFunding >= state.selected.fundingGoal;
         }
       })
       .addCase(investInOpportunity.rejected, (state, action) => {
@@ -416,18 +282,15 @@ const publishedInvestmentSlice = createSlice({
         state.myPortfolio = action.payload.investments;
         state.portfolioSummary = action.payload.summary;
 
-        // Update investedIds Set and mark investments in list
-        const investedIds = new Set<string>();
-        action.payload.investments.forEach((inv: PortfolioInvestment) => {
-          investedIds.add(inv.investmentId);
-        });
-
-        state.investedIds = investedIds;
+        // Update investedIds
+        state.investedIds = action.payload.investments.map(
+          (inv: PortfolioInvestment) => inv.investmentId,
+        );
 
         // Update list with invested flags
         state.list = state.list.map((investment) => ({
           ...investment,
-          hasUserInvested: investedIds.has(investment._id),
+          hasUserInvested: state.investedIds.includes(investment._id),
           userInvestmentAmount: action.payload.investments.find(
             (inv: PortfolioInvestment) => inv.investmentId === investment._id,
           )?.myInvestmentAmount,
@@ -435,7 +298,9 @@ const publishedInvestmentSlice = createSlice({
 
         // Update selected if it exists
         if (state.selected) {
-          state.selected.hasUserInvested = investedIds.has(state.selected._id);
+          state.selected.hasUserInvested = state.investedIds.includes(
+            state.selected._id,
+          );
           state.selected.userInvestmentAmount = action.payload.investments.find(
             (inv: PortfolioInvestment) =>
               inv.investmentId === state.selected?._id,
@@ -453,12 +318,6 @@ const publishedInvestmentSlice = createSlice({
   },
 });
 
-export const {
-  clearSelected,
-  clearError,
-  resetInvest,
-  resetSuccess,
-  markAsInvested,
-} = publishedInvestmentSlice.actions;
-
+export const { clearSelected, clearError, resetInvest, resetSuccess } =
+  publishedInvestmentSlice.actions;
 export default publishedInvestmentSlice.reducer;

@@ -2,9 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
 import {
   fetchInvestments,
-  fetchSectors,
   fetchMyPortfolio,
-type   Investment,
 } from "../slices/PublishedInvestmentSlice";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,10 +11,7 @@ import {
   ChevronRight,
   Briefcase,
   CheckCircle,
-  ArrowRight,
   TrendingUp,
-  Users,
-  // Clock,
 } from "lucide-react";
 
 const InvestmentsPage = () => {
@@ -29,9 +24,16 @@ const InvestmentsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSector, setSelectedSector] = useState("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
-  const [filterBy, setFilterBy] = useState<"all" | "available" | "invested">(
-    "all",
-  );
+
+  // Load data function
+  const loadData = async () => {
+    try {
+      await dispatch(fetchInvestments({ page: 1, limit: 20 })).unwrap();
+      await dispatch(fetchMyPortfolio()).unwrap();
+    } catch (error) {
+      console.error("Failed to load data:", error);
+    }
+  };
 
   // Load data on mount
   useEffect(() => {
@@ -45,42 +47,19 @@ const InvestmentsPage = () => {
     }
   }, [success]);
 
-  const loadData = async () => {
-    try {
-      await dispatch(fetchInvestments({ page: 1, limit: 20 })).unwrap();
-      await dispatch(fetchSectors()).unwrap();
-      await dispatch(fetchMyPortfolio()).unwrap();
-    } catch (error) {
-      console.error("Failed to load data:", error);
-    }
-  };
-
   // Get unique sectors
   const sectors = [...new Set(list.map((inv) => inv.sector).filter(Boolean))];
 
   // Filter and sort investments
   const filteredInvestments = list
     .filter((inv) => {
-      // Sector filter
-      if (selectedSector !== "all" && inv.sector !== selectedSector) {
+      if (selectedSector !== "all" && inv.sector !== selectedSector)
         return false;
-      }
-
-      // Investment status filter
-      if (filterBy === "available" && investedIds.has(inv._id)) {
-        return false;
-      }
-      if (filterBy === "invested" && !investedIds.has(inv._id)) {
-        return false;
-      }
-
-      // Search filter
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
         return (
           inv.title?.toLowerCase().includes(term) ||
-          inv.businessName?.toLowerCase().includes(term) ||
-          inv.sector?.toLowerCase().includes(term)
+          inv.businessName?.toLowerCase().includes(term)
         );
       }
       return true;
@@ -98,25 +77,23 @@ const InvestmentsPage = () => {
       minimumFractionDigits: 0,
     }).format(amount);
 
-  const handleButtonClick = (e: React.MouseEvent, investment: Investment) => {
+  // Handle button click based on investment status
+  const handleButtonClick = (e: React.MouseEvent, investmentId: string) => {
     e.stopPropagation();
 
-    if (investedIds.has(investment._id)) {
+    if (investedIds.includes(investmentId)) {
       // If already invested, go to portfolio
       navigate("/investor/portfolio");
     } else {
       // If not invested, go to investment details
-      navigate(`/investor/investments/${investment._id}`);
+      navigate(`/investor/investments/${investmentId}`);
     }
   };
 
   if (loading && list.length === 0) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading investment opportunities...</p>
-        </div>
+        <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -145,7 +122,7 @@ const InvestmentsPage = () => {
               className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-all flex items-center gap-2"
             >
               <TrendingUp className="w-4 h-4" />
-              My Portfolio
+              My Portfolio ({investedIds.length})
             </button>
           </div>
 
@@ -155,18 +132,18 @@ const InvestmentsPage = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
                 type="text"
-                placeholder="Search by title, company, or sector..."
+                placeholder="Search by title or company..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all"
               />
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex gap-3">
               <select
                 value={selectedSector}
                 onChange={(e) => setSelectedSector(e.target.value)}
-                className="bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-yellow-400 min-w-[140px]"
+                className="bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-yellow-400"
               >
                 <option value="all">All Sectors</option>
                 {sectors.map((s) => (
@@ -177,25 +154,11 @@ const InvestmentsPage = () => {
               </select>
 
               <select
-                value={filterBy}
-                onChange={(e) =>
-                  setFilterBy(
-                    e.target.value as "all" | "available" | "invested",
-                  )
-                }
-                className="bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-yellow-400 min-w-[140px]"
-              >
-                <option value="all">All Projects</option>
-                <option value="available">Available to Invest</option>
-                <option value="invested">My Investments</option>
-              </select>
-
-              <select
                 value={sortBy}
                 onChange={(e) =>
                   setSortBy(e.target.value as "newest" | "oldest")
                 }
-                className="bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-yellow-400 min-w-[140px]"
+                className="bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-yellow-400"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -207,9 +170,9 @@ const InvestmentsPage = () => {
           <div className="mt-4 text-sm text-gray-400">
             Showing {filteredInvestments.length} of {pagination.total}{" "}
             opportunities
-            {investedIds.size > 0 && (
+            {investedIds.length > 0 && (
               <span className="ml-2 text-green-400">
-                • You've invested in {investedIds.size} projects
+                • You've invested in {investedIds.length} projects
               </span>
             )}
           </div>
@@ -226,19 +189,9 @@ const InvestmentsPage = () => {
             <h3 className="text-xl font-semibold text-white mb-2">
               No investments found
             </h3>
-            <p className="text-gray-400 mb-6">
-              {filterBy === "invested"
-                ? "You haven't invested in any projects yet"
-                : "Try adjusting your search or filters"}
+            <p className="text-gray-400">
+              Try adjusting your search or filters
             </p>
-            {filterBy === "invested" && (
-              <button
-                onClick={() => setFilterBy("available")}
-                className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold rounded-xl hover:from-yellow-500 hover:to-yellow-600 transition-all"
-              >
-                Browse Available Projects
-              </button>
-            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -248,7 +201,7 @@ const InvestmentsPage = () => {
                 (investment.currentFunding / investment.fundingGoal) * 100;
               const remaining =
                 investment.fundingGoal - investment.currentFunding;
-              const hasInvested = investedIds.has(investment._id);
+              const hasInvested = investedIds.includes(investment._id);
 
               return (
                 <div
@@ -264,9 +217,9 @@ const InvestmentsPage = () => {
                       : "border-gray-800 hover:border-yellow-400/50 hover:shadow-2xl hover:shadow-yellow-500/5 cursor-pointer"
                   }`}
                 >
-                  {/* Header Badges */}
+                  {/* Sector Badge */}
                   <div className="flex justify-between items-start mb-4">
-                    <div className="px-3 py-1 bg-yellow-400/10 text-yellow-400 rounded-full text-xs font-medium">
+                    <div className="inline-block px-3 py-1 bg-yellow-400/10 text-yellow-400 rounded-full text-xs font-medium">
                       {investment.sector || "Business"}
                     </div>
 
@@ -274,12 +227,6 @@ const InvestmentsPage = () => {
                       <div className="px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/30 rounded-full text-xs font-medium flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
                         Invested
-                      </div>
-                    )}
-
-                    {investment.isFullyFunded && !hasInvested && (
-                      <div className="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded-full text-xs font-medium">
-                        Fully Funded
                       </div>
                     )}
                   </div>
@@ -311,8 +258,7 @@ const InvestmentsPage = () => {
                       <div className="text-xs text-gray-500 mb-1">
                         Investors
                       </div>
-                      <div className="text-white font-bold flex items-center justify-center gap-1">
-                        <Users className="w-3 h-3" />
+                      <div className="text-white font-bold">
                         {investment.investments?.length || 0}
                       </div>
                     </div>
@@ -352,7 +298,7 @@ const InvestmentsPage = () => {
                     </div>
                   </div>
 
-                  {/* Investment Amount if invested */}
+                  {/* Show invested amount if already invested */}
                   {hasInvested && investment.userInvestmentAmount && (
                     <div className="mb-3 p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
                       <div className="flex justify-between items-center">
@@ -363,58 +309,43 @@ const InvestmentsPage = () => {
                           {formatCurrency(investment.userInvestmentAmount)}
                         </span>
                       </div>
-                      {investment.userInvestmentDate && (
-                        <div className="flex justify-between items-center mt-1">
-                          <span className="text-xs text-gray-400">
-                            Invested on
-                          </span>
-                          <span className="text-xs text-gray-300">
-                            {new Date(
-                              investment.userInvestmentDate,
-                            ).toLocaleDateString()}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   )}
 
-                  {/* Action Button */}
-                  <div className="mt-4">
+                  {/* Min Investment & Dynamic Button */}
+                  <div className="flex items-center justify-between mt-6">
+                    <div>
+                      <span className="text-xs text-gray-500 block">
+                        Minimum
+                      </span>
+                      <span className="text-lg font-bold text-white">
+                        {formatCurrency(investment.minimumInvestment)}
+                      </span>
+                    </div>
+
                     {hasInvested ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate("/investor/portfolio");
                         }}
-                        className="w-full px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/25"
+                        className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-green-500/25"
                       >
                         <CheckCircle className="w-4 h-4" />
-                        View in Portfolio
-                        <ArrowRight className="w-4 h-4" />
+                        Invested
                       </button>
-                    ) : investment.isFullyFunded ? (
-                      <div className="w-full px-6 py-3 bg-gray-700 text-gray-300 font-semibold rounded-xl text-center">
-                        Fully Funded
-                      </div>
                     ) : (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/investor/investments/${investment._id}`);
                         }}
-                        className="w-full px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/25"
+                        className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-semibold rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-yellow-500/25"
                       >
                         Invest Now
                         <ChevronRight className="w-4 h-4" />
                       </button>
                     )}
-                  </div>
-
-                  {/* Minimum Investment */}
-                  <div className="mt-3 text-center">
-                    <span className="text-xs text-gray-500">
-                      Min. {formatCurrency(investment.minimumInvestment)}
-                    </span>
                   </div>
                 </div>
               );

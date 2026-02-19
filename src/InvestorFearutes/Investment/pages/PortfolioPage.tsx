@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
-import {
-  fetchMyPortfolio,
-
-} from "../slices/PublishedInvestmentSlice";
+import { fetchMyPortfolio } from "../slices/PublishedInvestmentSlice";
 import { useNavigate } from "react-router-dom";
 import {
   Briefcase,
@@ -28,6 +25,7 @@ const PortfolioPage = () => {
   const { myPortfolio, portfolioSummary, loading } = useAppSelector(
     (state) => state.published,
   );
+
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -43,7 +41,6 @@ const PortfolioPage = () => {
     }
   };
 
-  // Safe arrays
   const safePortfolio = myPortfolio || [];
   const safeSummary = portfolioSummary || {
     totalInvested: 0,
@@ -76,8 +73,7 @@ const PortfolioPage = () => {
       return (
         inv.title?.toLowerCase().includes(term) ||
         inv.businessName?.toLowerCase().includes(term) ||
-        inv.sector?.toLowerCase().includes(term) ||
-        inv.location?.toLowerCase().includes(term)
+        inv.sector?.toLowerCase().includes(term)
       );
     }
     return true;
@@ -100,14 +96,16 @@ const PortfolioPage = () => {
     };
     return (
       <span
-        className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || styles.pending}`}
+        className={`px-3 py-1 rounded-full text-xs font-medium ${
+          styles[status as keyof typeof styles] || styles.pending
+        }`}
       >
         {statusText[status as keyof typeof statusText] || status}
       </span>
     );
   };
 
-  if (loading) {
+  if (loading && safePortfolio.length === 0) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">
@@ -131,12 +129,12 @@ const PortfolioPage = () => {
               <div>
                 <h1 className="text-2xl font-bold text-white">My Portfolio</h1>
                 <p className="text-sm text-gray-400">
-                  Track and manage your diaspora investments
+                  Track and manage your investments
                 </p>
               </div>
             </div>
             <button
-              onClick={() => navigate("/investments")}
+              onClick={() => navigate("/investor/investments")}
               className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-all flex items-center gap-2"
             >
               <TrendingUp className="w-4 h-4" />
@@ -147,7 +145,7 @@ const PortfolioPage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Portfolio Summary Cards - Using API summary data */}
+        {/* Portfolio Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 hover:border-yellow-400/50 transition-all group">
             <div className="flex items-center justify-between mb-4">
@@ -211,7 +209,7 @@ const PortfolioPage = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
               <input
                 type="text"
-                placeholder="Search by project, company, or sector..."
+                placeholder="Search by project or company..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-yellow-400"
@@ -231,7 +229,6 @@ const PortfolioPage = () => {
               </select>
               <button
                 onClick={() => {
-                  // Export functionality
                   console.log("Export portfolio data");
                 }}
                 className="p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:border-yellow-400 transition-all"
@@ -252,10 +249,10 @@ const PortfolioPage = () => {
               No investments yet
             </h3>
             <p className="text-gray-400 mb-6">
-              Start your diaspora investment journey today
+              Start your investment journey today
             </p>
             <button
-              onClick={() => navigate("/investments")}
+              onClick={() => navigate("/investor/investments")}
               className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold rounded-xl hover:from-yellow-500 hover:to-yellow-600 transition-all"
             >
               Browse Opportunities
@@ -267,7 +264,7 @@ const PortfolioPage = () => {
               <div
                 key={investment.investmentId}
                 onClick={() =>
-                  navigate(`/investments/${investment.investmentId}`)
+                  navigate(`/investor/investments/${investment.investmentId}`)
                 }
                 className="bg-gray-900 border border-gray-800 rounded-2xl p-6 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-500/5 transition-all cursor-pointer group"
               >
@@ -279,11 +276,6 @@ const PortfolioPage = () => {
                         {investment.title}
                       </h3>
                       {getStatusBadge(investment.investmentStatus)}
-                      {investment.isFullyFunded && (
-                        <span className="px-2 py-1 bg-green-400/10 text-green-400 rounded-full text-xs font-medium">
-                          Fully Funded
-                        </span>
-                      )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 mb-3">
@@ -303,17 +295,12 @@ const PortfolioPage = () => {
                         <Percent className="w-4 h-4 text-green-400" />
                         {investment.expectedReturn}% ROI
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        {investment.totalInvestors} investors
-                      </span>
                     </div>
 
                     {/* Business Owner Info */}
                     <div className="text-xs text-gray-500 mb-2">
                       <span className="font-medium text-gray-400">Owner:</span>{" "}
-                      {investment.businessOwnerName} •{" "}
-                      {investment.businessOwnerEmail}
+                      {investment.businessOwnerName}
                     </div>
 
                     {/* Progress Bar - Only for active investments */}
@@ -338,14 +325,6 @@ const PortfolioPage = () => {
                               )}%`,
                             }}
                           />
-                        </div>
-                        <div className="flex justify-between text-xs mt-1">
-                          <span className="text-gray-500">
-                            Raised: {formatCurrency(investment.currentFunding)}
-                          </span>
-                          <span className="text-gray-500">
-                            Goal: {formatCurrency(investment.fundingGoal)}
-                          </span>
                         </div>
                       </div>
                     )}
