@@ -4,7 +4,7 @@ import {
   PieChart,
   TrendingUp,
   DollarSign,
-  Briefcase,
+  // Briefcase,
   PlusCircle,
   User,
   Bell,
@@ -32,10 +32,21 @@ const menuItems = [
   },
 
   // Investment Management
-  { icon: Briefcase, label: "My Investments", href: "/business/myinvestment" },
+ 
   {
     icon: PlusCircle,
-    label: "Create Investment",
+    label: " My Investment",
+    href: "/business/portfolio",
+  },
+  {
+    icon: PlusCircle,
+    label: " Manage Investment",
+    href: "/business/manageInvestment",
+  },
+  
+  {
+    icon: PlusCircle,
+    label: " Create Investment",
     href: "/business/investments/create",
   },
 

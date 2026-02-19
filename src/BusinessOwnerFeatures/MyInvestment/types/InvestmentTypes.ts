@@ -1,3 +1,4 @@
+// BusinessOwnerFeatures/MyInvestment/types/InvestmentTypes.ts
 export interface InvestorDetail {
   investorName: string;
   investorEmail: string;
@@ -10,40 +11,25 @@ export interface InvestorDetail {
 export interface Investment {
   _id: string;
   title: string;
-  businessName: string;
-  sector: string;
-  location: string;
   fundingGoal: number;
   currentFunding: number;
   fundingProgress: string;
   remainingAmount: number;
-  minimumInvestment: number;
-  expectedReturn: number;
-  investmentPeriod: number;
-  status:
-    | "draft"
-    | "pending"
-    | "published"
-    | "active"
-    | "completed"
-    | "rejected";
   isFullyFunded: boolean;
   totalInvestors: number;
-  investorsDetails?: InvestorDetail[];
+  investorsDetails: InvestorDetail[];
+  businessName?: string;
   description?: string;
+  expectedReturn?: number;
+  investmentPeriod?: number;
+  minimumInvestment?: number;
+  maxInvestment?: number;
   riskFactors?: string;
-  useOfFunds?: string;
-  businessPlan?: string;
-  isVerified?: boolean;
-  businessOwnerId?: string | { _id: string; email: string };
-  investments?: Array<{
-    investorId: string | { _id: string; email: string };
-    amount: number;
-    investmentDate: string;
-    status: string;
-  }>;
+  sector?: string;
+  location?: string;
+  status?: string;
   createdAt?: string;
-  updatedAt?: string;
+  businessOwnerId?: string;
 }
 
 export interface PortfolioSummary {
@@ -60,18 +46,19 @@ export interface PortfolioSummary {
 export interface CreateInvestmentRequest {
   title: string;
   businessName: string;
+  industry: string;
   sector: string;
-  location: string;
+  description: string;
   fundingGoal: number;
-  minimumInvestment: number;
   expectedReturn: number;
   investmentPeriod: number;
-  description: string;
-  riskFactors?: string;
-  useOfFunds?: string;
-  businessPlan?: string;
+  minimumInvestment: number;
+  maxInvestment?: number;
+  riskFactors: string;
+  businessPlan: string;
+  useOfFunds: string;
+  location: string;
 }
 
-export interface UpdateInvestmentRequest extends Partial<CreateInvestmentRequest> {
-  status?: string;
-}
+// No UpdateInvestmentRequest needed since you don't have update endpoint
+// No Delete endpoint either

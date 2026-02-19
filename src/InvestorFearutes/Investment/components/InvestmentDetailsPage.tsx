@@ -1,591 +1,437 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
+// AdminFeatures/InvestmentApproval/components/AdminViewsDetailModals.tsx
+import React from "react";
+import type { Investment } from "@/types/index";
 import {
-  fetchInvestmentById,
-  investInOpportunity,
-  fetchMyPortfolio,
-  clearError,
-  resetInvest,
-  resetSuccess,
-} from "../slices/PublishedInvestmentSlice";
-import {
-  ArrowLeft,
-  TrendingUp,
-  DollarSign,
-  Clock,
-  // Users,
+  X,
   Building2,
-  Percent,
-  AlertCircle,
+  // Mail,
+  // Phone,
+  MapPin,
+  Globe,
+  FileText,
+  TrendingUp,
+  Clock,
   CheckCircle,
-  Loader2,
-  Banknote,
-  CreditCard,
-  Globe2,
+  XCircle,
+  AlertTriangle,
+  // DollarSign,
+  // Percent,
+  User,
   Shield,
+  // Calendar,
 } from "lucide-react";
 
-const InvestmentDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const { selected, loading, investing, success, error, investedIds } =
-    useAppSelector((state) => state.published);
+// ✅ Proper interface for props
+interface AdminInvestmentDetailModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  investment: Investment | null;
+  onApprove?: (investment: Investment) => void;
+  onReject?: (investment: Investment) => void;
+  actionLoading?: string | null;
+}
 
-  // Form state
-  const [amount, setAmount] = useState<number>(0);
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
-  const [notes, setNotes] = useState("");
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+const AdminInvestmentDetailModal: React.FC<AdminInvestmentDetailModalProps> = ({
+  isOpen,
+  onClose,
+  investment,
+  onApprove,
+  onReject,
+  actionLoading,
+}) => {
+  // Don't render if modal is closed or no investment data
+  if (!isOpen || !investment) return null;
 
-  useEffect(() => {
-    if (id) {
-      dispatch(fetchInvestmentById(id));
-      dispatch(fetchMyPortfolio()); // Load portfolio to check if already invested
-    }
-    return () => {
-      dispatch(clearError());
-      dispatch(resetInvest());
-      dispatch(resetSuccess());
-    };
-  }, [dispatch, id]);
-
-  useEffect(() => {
-    if (selected) {
-      setAmount(selected.minimumInvestment || 100);
-      setNotes(`Excited to invest in ${selected.businessName}!`);
-    }
-  }, [selected]);
-
-  useEffect(() => {
-    if (success) {
-      setShowSuccessModal(true);
-      // Refresh portfolio data
-      dispatch(fetchMyPortfolio());
-
-      // Auto-hide after 5 seconds
-      const timer = setTimeout(() => {
-        setShowSuccessModal(false);
-        dispatch(resetSuccess());
-      }, 5000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [success, dispatch]);
-
-  const handleInvest = async () => {
-    if (!id || !amount || amount < (selected?.minimumInvestment || 0)) {
-      return;
-    }
-
-    try {
-      await dispatch(
-        investInOpportunity({
-          id,
-          amount,
-          paymentMethod,
-          notes,
-        }),
-      ).unwrap();
-    } catch (error) {
-      console.error("Investment failed:", error);
-    }
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat("en-US", {
+  const formatCurrency = (amount: number = 0) => {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: 0,
-    }).format(val);
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
-  // Check if already invested
-  const hasInvested = id ? investedIds.includes(id) : false;
+  const getStatusBadge = (status: string = "") => {
+    const normalizedStatus = status?.toLowerCase() || "";
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading investment details...</p>
-        </div>
-      </div>
-    );
-  }
+    switch (normalizedStatus) {
+      case "approved":
+        return (
+          <span className="px-3 py-1.5 bg-green-500/20 text-green-400 border border-green-500/30 rounded-full text-sm font-medium flex items-center gap-1.5">
+            <CheckCircle className="w-4 h-4" />
+            Approved
+          </span>
+        );
+      case "rejected":
+      case "cancelled":
+        return (
+          <span className="px-3 py-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-full text-sm font-medium flex items-center gap-1.5">
+            <XCircle className="w-4 h-4" />
+            Rejected
+          </span>
+        );
+      case "published":
+        return (
+          <span className="px-3 py-1.5 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-full text-sm font-medium flex items-center gap-1.5">
+            <Globe className="w-4 h-4" />
+            Published
+          </span>
+        );
+      case "draft":
+        return (
+          <span className="px-3 py-1.5 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-full text-sm font-medium flex items-center gap-1.5">
+            <Clock className="w-4 h-4" />
+            Draft
+          </span>
+        );
+      default:
+        return (
+          <span className="px-3 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full text-sm font-medium flex items-center gap-1.5">
+            <AlertTriangle className="w-4 h-4" />
+            Pending Review
+          </span>
+        );
+    }
+  };
 
-  if (!selected) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-10 h-10 text-red-400" />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Investment Not Found
-          </h2>
-          <p className="text-gray-400 mb-6">
-            The investment opportunity you're looking for doesn't exist or has
-            been removed.
-          </p>
-          <button
-            onClick={() => navigate("/investor/investments")}
-            className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold rounded-xl hover:from-yellow-500 hover:to-yellow-600 transition-all"
-          >
-            Browse Investments
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const isPending =
+    investment.status?.toLowerCase() === "pending" ||
+    investment.status?.toLowerCase() === "draft";
 
-  // If already invested, show invested view
-  if (hasInvested) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8 bg-gray-900 border border-green-500/30 rounded-2xl">
-          <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-10 h-10 text-green-400" />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2">
-            You've Already Invested
-          </h2>
-          <p className="text-gray-400 mb-6">
-            You invested in {selected.businessName}
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => navigate("/investor/portfolio")}
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold rounded-lg hover:from-yellow-500 hover:to-yellow-600 transition-all"
-            >
-              View Portfolio
-            </button>
-            <button
-              onClick={() => navigate("/investor/investments")}
-              className="flex-1 px-4 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-all"
-            >
-              Browse More
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const isApproved = investment.status?.toLowerCase() === "approved";
+  const isRejected =
+    investment.status?.toLowerCase() === "rejected" ||
+    investment.status?.toLowerCase() === "cancelled";
+  const isPublished = investment.status?.toLowerCase() === "published";
 
-  const progress = (selected.currentFunding / selected.fundingGoal) * 100;
-  const remaining = selected.fundingGoal - selected.currentFunding;
-  const expectedReturn = (amount * selected.expectedReturn) / 100;
+  const showApprove = onApprove && (isPending || isRejected);
+  const showReject =
+    onReject && (isPending || isApproved) && !isPublished && !isRejected;
 
   return (
-    <div className="min-h-screen bg-gray-950 pb-16">
-      {/* Success Modal */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-gray-900 border border-green-500/30 rounded-2xl p-8 max-w-md mx-4 shadow-2xl animate-fadeIn">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-white" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div className="relative w-full max-w-4xl mx-4 bg-[#0F0F0F] border border-gray-800 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 flex items-center justify-between p-6 border-b border-gray-800 bg-[#0F0F0F] z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center text-2xl font-bold text-black">
+              {investment.title?.charAt(0) || "I"}
             </div>
-            <h3 className="text-xl font-bold text-white text-center mb-2">
-              Investment Successful!
-            </h3>
-            <p className="text-gray-400 text-center mb-6">
-              You invested {formatCurrency(amount)} in {selected.businessName}
-            </p>
-            <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 mb-6">
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-400">Expected Return</span>
-                <span className="text-green-400 font-bold">
-                  {formatCurrency(expectedReturn)}
+            <div>
+              <h2 className="text-2xl font-bold text-white">
+                {investment.title}
+              </h2>
+              <div className="flex items-center gap-3 mt-2">
+                {getStatusBadge(investment.status)}
+                <span className="text-sm text-gray-400">
+                  ID: {investment._id?.slice(-8)}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Status</span>
-                <span className="text-yellow-400 font-medium">
-                  Pending Approval
-                </span>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  navigate("/investor/portfolio");
-                }}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold rounded-lg hover:from-yellow-500 hover:to-yellow-600 transition-all"
-              >
-                View Portfolio
-              </button>
-              <button
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  navigate("/investor/investments");
-                }}
-                className="flex-1 px-4 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-all"
-              >
-                Browse More
-              </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900/50 sticky top-0 z-40 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 py-4">
           <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            onClick={onClose}
+            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Investments
+            <X className="w-6 h-6 text-gray-400" />
           </button>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Investment Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Company Header */}
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 md:p-8">
-              <div className="flex items-start justify-between mb-6">
+        {/* Content */}
+        <div className="p-6 space-y-8">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-gray-800/30 rounded-xl p-4">
+              <p className="text-xs text-gray-500 mb-1">Funding Goal</p>
+              <p className="text-lg font-bold text-white">
+                {formatCurrency(investment.fundingGoal)}
+              </p>
+            </div>
+            <div className="bg-gray-800/30 rounded-xl p-4">
+              <p className="text-xs text-gray-500 mb-1">Current Funding</p>
+              <p className="text-lg font-bold text-green-400">
+                {formatCurrency(investment.currentFunding || 0)}
+              </p>
+            </div>
+            <div className="bg-gray-800/30 rounded-xl p-4">
+              <p className="text-xs text-gray-500 mb-1">Expected Return</p>
+              <p className="text-lg font-bold text-yellow-400">
+                {investment.expectedReturn || 0}%
+              </p>
+            </div>
+            <div className="bg-gray-800/30 rounded-xl p-4">
+              <p className="text-xs text-gray-500 mb-1">Min Investment</p>
+              <p className="text-lg font-bold text-white">
+                {formatCurrency(investment.minimumInvestment)}
+              </p>
+            </div>
+          </div>
+
+          {/* Investment Information Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Business Information */}
+            <div className="bg-gray-800/30 rounded-xl p-6">
+              <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-yellow-400" />
+                Business Information
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-4 h-4 text-gray-500" />
+                  <div>
+                    <p className="text-xs text-gray-500">Business Name</p>
+                    <p className="text-sm text-white">
+                      {investment.businessName}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <FileText className="w-4 h-4 text-gray-500" />
+                  <div>
+                    <p className="text-xs text-gray-500">Sector / Industry</p>
+                    <p className="text-sm text-white">
+                      {investment.sector}{" "}
+                      {investment.industry && ` • ${investment.industry}`}
+                    </p>
+                  </div>
+                </div>
+                {investment.location && (
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <p className="text-xs text-gray-500">Location</p>
+                      <p className="text-sm text-white">
+                        {investment.location}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Investment Details */}
+            <div className="bg-gray-800/30 rounded-xl p-6">
+              <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-yellow-400" />
+                Investment Details
+              </h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500">Investment Period</p>
+                    <p className="text-sm text-white">
+                      {investment.investmentPeriod || 0} months
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">ROI Expected</p>
+                    <p className="text-sm text-green-400">
+                      {investment.expectedReturn || 0}%
+                    </p>
+                  </div>
+                </div>
                 <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="px-3 py-1 bg-yellow-400/10 text-yellow-400 rounded-full text-xs font-medium">
-                      {selected.sector}
-                    </span>
-                    <span className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-xs">
-                      {selected.riskFactors || "Medium Risk"}
-                    </span>
-                  </div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                    {selected.title}
-                  </h1>
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <Building2 className="w-4 h-4" />
-                    <span>{selected.businessName}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Key Metrics */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <DollarSign className="w-4 h-4 text-yellow-400" />
-                    <span className="text-xs text-gray-400">Goal</span>
-                  </div>
-                  <p className="text-lg font-bold text-white">
-                    {formatCurrency(selected.fundingGoal)}
+                  <p className="text-xs text-gray-500">Use of Funds</p>
+                  <p className="text-sm text-gray-300 mt-1">
+                    {investment.useOfFunds || "Not specified"}
                   </p>
-                </div>
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <TrendingUp className="w-4 h-4 text-green-400" />
-                    <span className="text-xs text-gray-400">Raised</span>
-                  </div>
-                  <p className="text-lg font-bold text-white">
-                    {formatCurrency(selected.currentFunding)}
-                  </p>
-                </div>
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Percent className="w-4 h-4 text-blue-400" />
-                    <span className="text-xs text-gray-400">Return</span>
-                  </div>
-                  <p className="text-lg font-bold text-green-400">
-                    {selected.expectedReturn}%
-                  </p>
-                </div>
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Clock className="w-4 h-4 text-purple-400" />
-                    <span className="text-xs text-gray-400">Period</span>
-                  </div>
-                  <p className="text-lg font-bold text-white">
-                    {selected.investmentPeriod} months
-                  </p>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="mt-6">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-400">Funding Progress</span>
-                  <span className="font-medium text-yellow-400">
-                    {progress.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(progress, 100)}%` }}
-                  />
-                </div>
-                <div className="flex justify-between mt-2 text-sm">
-                  <span className="text-gray-500">
-                    Raised: {formatCurrency(selected.currentFunding)}
-                  </span>
-                  <span className="text-gray-500">
-                    Target: {formatCurrency(selected.fundingGoal)}
-                  </span>
                 </div>
               </div>
             </div>
 
             {/* Description */}
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 md:p-8">
-              <h3 className="text-lg font-semibold text-white mb-4">
-                About the Investment
+            <div className="bg-gray-800/30 rounded-xl p-6 md:col-span-2">
+              <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-yellow-400" />
+                Description
               </h3>
-              <p className="text-gray-400 leading-relaxed">
-                {selected.description || "No description provided."}
+              <p className="text-gray-300 whitespace-pre-wrap">
+                {investment.description || "No description provided."}
               </p>
+            </div>
 
-              {selected.useOfFunds && (
-                <div className="mt-6">
-                  <h4 className="text-md font-semibold text-white mb-3">
-                    Use of Funds
-                  </h4>
-                  <p className="text-gray-400">{selected.useOfFunds}</p>
+            {/* Risk Factors */}
+            {investment.riskFactors && (
+              <div className="bg-gray-800/30 rounded-xl p-6 md:col-span-2">
+                <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                  Risk Factors
+                </h3>
+                <p className="text-gray-300 whitespace-pre-wrap">
+                  {investment.riskFactors}
+                </p>
+              </div>
+            )}
+
+            {/* Business Plan */}
+            {investment.businessPlan && (
+              <div className="bg-gray-800/30 rounded-xl p-6 md:col-span-2">
+                <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-yellow-400" />
+                  Business Plan
+                </h3>
+                <div className="bg-gray-900/50 rounded-lg p-4">
+                  <p className="text-gray-300 whitespace-pre-wrap">
+                    {investment.businessPlan}
+                  </p>
                 </div>
+              </div>
+            )}
+
+            {/* Owner Information */}
+            <div className="bg-gray-800/30 rounded-xl p-6 md:col-span-2">
+              <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                <User className="w-5 h-5 text-yellow-400" />
+                Business Owner
+              </h3>
+              {typeof investment.businessOwnerId === "object" ? (
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center text-xl font-bold text-white">
+                    {investment.businessOwnerId.fullName?.charAt(0) ||
+                      investment.businessOwnerId.email?.charAt(0) ||
+                      "U"}
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">
+                      {investment.businessOwnerId.fullName || "Business Owner"}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {investment.businessOwnerId.email}
+                    </p>
+                    {investment.businessOwnerId.phoneNumber && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {investment.businessOwnerId.phoneNumber}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-400">
+                  Owner ID: {investment.businessOwnerId}
+                </p>
               )}
             </div>
 
-            {/* Business Information */}
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 md:p-8">
-              <h3 className="text-lg font-semibold text-white mb-4">
-                Business Information
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
+            {/* Timestamps */}
+            <div className="bg-gray-800/30 rounded-xl p-6 md:col-span-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <div className="text-xs text-gray-500 mb-1">Company</div>
-                  <div className="text-white font-medium">
-                    {selected.businessName}
-                  </div>
+                  <p className="text-xs text-gray-500 mb-1">Created At</p>
+                  <p className="text-sm text-white">
+                    {formatDate(investment.createdAt)}
+                  </p>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 mb-1">Sector</div>
-                  <div className="text-white font-medium">
-                    {selected.sector}
-                  </div>
+                  <p className="text-xs text-gray-500 mb-1">Last Updated</p>
+                  <p className="text-sm text-white">
+                    {formatDate(investment.updatedAt)}
+                  </p>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 mb-1">Founded</div>
-                  <div className="text-white font-medium">2024</div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">Verification</div>
-                  <div className="text-green-400 font-medium flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" />
-                    Verified
-                  </div>
+                  <p className="text-xs text-gray-500 mb-1">
+                    Verification Date
+                  </p>
+                  <p className="text-sm text-white">
+                    {formatDate(investment.verificationDate)}
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Right Column - Investment Form */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24">
-              <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-yellow-400" />
-                  Invest Now
+            {/* Verification Info */}
+            {investment.verificationNotes && (
+              <div className="bg-gray-800/30 rounded-xl p-6 md:col-span-2">
+                <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-yellow-400" />
+                  Verification Notes
                 </h3>
-
-                {/* Amount Input */}
-                <div className="mb-6">
-                  <label className="block text-sm text-gray-400 mb-2">
-                    Investment Amount
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                      $
-                    </span>
-                    <input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(Number(e.target.value))}
-                      min={selected.minimumInvestment}
-                      max={remaining}
-                      className="w-full bg-gray-800 border border-gray-700 text-white text-xl font-bold pl-8 pr-4 py-4 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all"
-                    />
-                  </div>
-                  <div className="flex justify-between mt-2 text-sm">
-                    <span className="text-gray-500">
-                      Min: {formatCurrency(selected.minimumInvestment)}
-                    </span>
-                    <span className="text-gray-500">
-                      Available: {formatCurrency(remaining)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Payment Method */}
-                <div className="mb-6">
-                  <label className="block text-sm text-gray-400 mb-3">
-                    Payment Method
-                  </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <button
-                      onClick={() => setPaymentMethod("bank_transfer")}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                        paymentMethod === "bank_transfer"
-                          ? "border-yellow-400 bg-yellow-400/10"
-                          : "border-gray-700 bg-gray-800/50 hover:bg-gray-800"
-                      }`}
-                    >
-                      <Banknote
-                        className={`w-5 h-5 ${
-                          paymentMethod === "bank_transfer"
-                            ? "text-yellow-400"
-                            : "text-gray-400"
-                        }`}
-                      />
-                      <span
-                        className={`text-xs ${
-                          paymentMethod === "bank_transfer"
-                            ? "text-yellow-400"
-                            : "text-gray-400"
-                        }`}
-                      >
-                        Bank
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => setPaymentMethod("card")}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                        paymentMethod === "card"
-                          ? "border-yellow-400 bg-yellow-400/10"
-                          : "border-gray-700 bg-gray-800/50 hover:bg-gray-800"
-                      }`}
-                    >
-                      <CreditCard
-                        className={`w-5 h-5 ${
-                          paymentMethod === "card"
-                            ? "text-yellow-400"
-                            : "text-gray-400"
-                        }`}
-                      />
-                      <span
-                        className={`text-xs ${
-                          paymentMethod === "card"
-                            ? "text-yellow-400"
-                            : "text-gray-400"
-                        }`}
-                      >
-                        Card
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => setPaymentMethod("diaspora_remittance")}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                        paymentMethod === "diaspora_remittance"
-                          ? "border-yellow-400 bg-yellow-400/10"
-                          : "border-gray-700 bg-gray-800/50 hover:bg-gray-800"
-                      }`}
-                    >
-                      <Globe2
-                        className={`w-5 h-5 ${
-                          paymentMethod === "diaspora_remittance"
-                            ? "text-yellow-400"
-                            : "text-gray-400"
-                        }`}
-                      />
-                      <span
-                        className={`text-xs ${
-                          paymentMethod === "diaspora_remittance"
-                            ? "text-yellow-400"
-                            : "text-gray-400"
-                        }`}
-                      >
-                        Diaspora
-                      </span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div className="mb-6">
-                  <label className="block text-sm text-gray-400 mb-2">
-                    Note (Optional)
-                  </label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Excited to support Ethiopian innovation!"
-                    className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 resize-none"
-                    rows={3}
-                  />
-                </div>
-
-                {/* Summary */}
-                <div className="bg-gray-800/50 rounded-xl p-4 mb-6">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-sm text-gray-400">
-                      Investment Amount
-                    </span>
-                    <span className="text-lg font-bold text-white">
-                      {formatCurrency(amount)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center pt-3 border-t border-gray-700">
-                    <span className="text-sm text-gray-400">
-                      Expected Return ({selected.expectedReturn}%)
-                    </span>
-                    <span className="text-base font-bold text-green-400">
-                      +{formatCurrency(expectedReturn)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                  <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-red-400 mb-1">
-                        Investment Failed
-                      </p>
-                      <p className="text-xs text-red-300">{error}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Invest Button */}
-                <button
-                  onClick={handleInvest}
-                  disabled={
-                    investing ||
-                    amount < selected.minimumInvestment ||
-                    amount > remaining
-                  }
-                  className="w-full py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-black font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/25"
-                >
-                  {investing ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>Confirm Investment</>
-                  )}
-                </button>
-
-                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
-                  <Shield className="w-3 h-3" />
-                  <span>Secure transaction</span>
-                </div>
+                <p className="text-gray-300">{investment.verificationNotes}</p>
               </div>
-            </div>
+            )}
           </div>
         </div>
+
+        {/* Footer Actions */}
+        {(showApprove || showReject) && (
+          <div className="sticky bottom-0 flex items-center justify-end gap-3 p-6 border-t border-gray-800 bg-[#0A0A0A] rounded-b-2xl">
+            {showReject && (
+              <button
+                onClick={() => {
+                  onReject?.(investment);
+                  onClose();
+                }}
+                disabled={actionLoading === investment._id}
+                className="px-6 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                {actionLoading === investment._id ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-400 border-t-transparent"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-5 h-5" />
+                    Reject Investment
+                  </>
+                )}
+              </button>
+            )}
+
+            {showApprove && (
+              <button
+                onClick={() => {
+                  onApprove?.(investment);
+                  onClose();
+                }}
+                disabled={actionLoading === investment._id}
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-xl hover:from-green-600 hover:to-green-700 transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                {actionLoading === investment._id ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    {isApproved ? "Publish Investment" : "Approve Investment"}
+                  </>
+                )}
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        )}
+
+        {/* If no actions, just show close button */}
+        {!showApprove && !showReject && (
+          <div className="sticky bottom-0 flex items-center justify-end p-6 border-t border-gray-800 bg-[#0A0A0A] rounded-b-2xl">
+            <button
+              onClick={onClose}
+              className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default InvestmentDetailPage;
+export default AdminInvestmentDetailModal;

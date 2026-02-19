@@ -14,12 +14,12 @@ import InvestementApprovementPage from "@/AdminFeatures/InvestmentApproved/pages
 import BusinessMainDashboardPage from "@/BusinessOwnerFeatures/Dashboard/pages/BusinessMainDashboardPage";
 import BusinessDashboardHome from "@/BusinessOwnerFeatures/Dashboard/pages/BussinessDashboardHome";
 import Notifactionpage from "@/BusinessOwnerFeatures/Notification/pages/Notifactionpage";
-import MyInvestmentPage from "@/BusinessOwnerFeatures/MyInvestment/pages/MyInvestmentPage";
+
 import MarkettingPage from "@/BusinessOwnerFeatures/markets/pages/MarkettingPage";
 import BusinessKycPage from "../features/kyc/pages/BusinessKycPage";
 // import PortfolioPage from "@/BusinessOwnerFeatures/portfolio/pages/PortfolioPage";
 import BusinessManProPage from "@/BusinessOwnerFeatures/profiles/pages/BusinessManProPage";
-import MyportifolioPage from "@/BusinessOwnerFeatures/MyInvestment/pages/MyportifolioPage";
+import MyportifolioPage from "@/BusinessOwnerFeatures/MyInvestment/pages/MyInvestmentPortfolioPage";
 import CompanyProfilePage from "../features/companies/pages/CompanyProfilePage";
 // ========== INVESTOR FEATURES ==========
 import NewInvestmentPage from "@/InvestorFearutes/Investment/pages/NewInvestmentPage";
@@ -30,7 +30,7 @@ import ProfilePage from "@/InvestorFearutes/Profiles/pages/ProfilePage";
 import PortifolioPage from "../InvestorFearutes/Investment/pages/PortfolioPage";
 import DashboardHome from "@/InvestorFearutes/dashboard/pages/DashboardHome";
 import MainDashboardPage from "@/InvestorFearutes/dashboard/pages/MainDashboardPage";
-import InvestmentDetailPage from "@/InvestorFearutes/Investment/components/InvestmentDetailsPage"; // ✅ FIXED PATH
+import InvestmentDetailsPage from "@/InvestorFearutes/Investment/components/InvestmentDetailsPage";       
 
 // ========== ADMIN ADDITIONAL ==========
 // import LegalityApprovePage from "@/AdminFeatures/IpoApproved/pages/LegalityApprovePage";
@@ -50,6 +50,8 @@ import MyIPOsPage from "@/BusinessOwnerFeatures/IPOManagement/pages/MyIPOsPage";
 import { BrowseIPOsPage } from "@/InvestorFearutes/IPOInvesting/pages/BrowseIPOsPage";
 import { MySubscriptionsPage } from "@/InvestorFearutes/IPOInvesting/pages/MySubscriptionsPage";
 import { AdminIPOAllPage } from "@/AdminFeatures/IPOManagement/pages/AdminIPOAllPage";
+import MyInvestmentPortfolioPage from "@/BusinessOwnerFeatures/MyInvestment/pages/MyInvestmentPortfolioPage";
+import CreateIvestmentPage from "@/BusinessOwnerFeatures/MyInvestment/pages/CreateIvestmentPage"
 
 const AppRouter = () => {
   return (
@@ -103,13 +105,18 @@ const AppRouter = () => {
           }
         >
           <Route index element={<BusinessDashboardHome />} />
-          <Route path="investments/create" element={<MyInvestmentPage />} />
+
+          <Route path="investments/create" element={<CreateIvestmentPage />} />
+          <Route
+            path="manageInvestment"
+            element={<MyInvestmentPortfolioPage />}
+          />
           <Route path="company/create" element={<CompanyRegisterPage />} />
           <Route path="company/profile" element={<CompanyProfilePage />} />
           <Route path="kyc" element={<BusinessKycPage />} />
           <Route path="market" element={<MarkettingPage />} />
           <Route path="stock" element={<StockPage />} />
-          <Route path="myinvestment" element={<MyportifolioPage />} />
+          <Route path="portfolio" element={<MyportifolioPage />} />
           <Route path="ipo/create" element={<CreateIPOPage />} />
           <Route path="my-ipos" element={<MyIPOsPage />} />
           <Route path="remittance" element={<RemittancePage />} />
@@ -138,7 +145,7 @@ const AppRouter = () => {
           <Route path="stock" element={<StockPage />} />
           <Route path="investipo" element={<IpoBrowsePage />} />
           <Route path="investments" element={<NewInvestmentPage />} />
-          <Route path="investments/:id" element={<InvestmentDetailPage />} />
+          <Route path="investments/:id" element={<InvestmentDetailsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
