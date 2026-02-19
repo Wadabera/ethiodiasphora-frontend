@@ -52,10 +52,7 @@ export const SubscriptionStatusBadge: React.FC<Props> = ({ status }) => {
       label: "Approved",
       className: "bg-green-900/30 text-green-400 border border-green-800",
     },
-    rejected: {
-      label: "Rejected",
-      className: "bg-red-900/30 text-red-400 border border-red-800",
-    },
+ 
     allocated: {
       label: "Allocated",
       className: "bg-purple-900/30 text-purple-400 border border-purple-800",

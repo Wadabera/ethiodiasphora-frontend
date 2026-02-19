@@ -32,7 +32,7 @@ const menuItems = [
   },
 
   // Investment Management
-  { icon: Briefcase, label: "My Investments", href: "/business/my/investment" },
+  { icon: Briefcase, label: "My Investments", href: "/business/myinvestment" },
   {
     icon: PlusCircle,
     label: "Create Investment",

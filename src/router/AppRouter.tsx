@@ -109,7 +109,7 @@ const AppRouter = () => {
           <Route path="kyc" element={<BusinessKycPage />} />
           <Route path="market" element={<MarkettingPage />} />
           <Route path="stock" element={<StockPage />} />
-          <Route path="my/investment" element={<MyportifolioPage />} />
+          <Route path="myinvestment" element={<MyportifolioPage />} />
           <Route path="ipo/create" element={<CreateIPOPage />} />
           <Route path="my-ipos" element={<MyIPOsPage />} />
           <Route path="remittance" element={<RemittancePage />} />

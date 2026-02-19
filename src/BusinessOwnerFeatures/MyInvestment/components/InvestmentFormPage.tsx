@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
-import { createInvestment, clearError } from "../slice/InvestmentSlice";
+import { createInvestment,  } from "../slice/InvestmentSlice";
 import type { CreateInvestmentRequest } from "@/types/index";
 import {
   DollarSign,

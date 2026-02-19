@@ -1,12 +1,10 @@
-// import React from "react";
+import React from "react";
+import MyInvestmentsPage from "../components/MyInvestmentsPage";
 
-// import MyInvestment from "../components/MyInvestment";
-import InvestmentFormPage from"../components/InvestmentFormPage"
 const MyInvestmentPage = () => {
   return (
-    <div>
-      {/* <MyInvestment /> */}
-      <InvestmentFormPage />
+    <div className="min-h-screen bg-gray-950">
+      <MyInvestmentsPage />
     </div>
   );
 };
