@@ -1,0 +1,1 @@
+export const API_CONSTANT = "https://busnessman-diaspora-platform-7.onrender.com";
