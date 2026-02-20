@@ -52,6 +52,9 @@ import { MySubscriptionsPage } from "@/InvestorFearutes/IPOInvesting/pages/MySub
 import { AdminIPOAllPage } from "@/AdminFeatures/IPOManagement/pages/AdminIPOAllPage";
 import MyInvestmentPortfolioPage from "@/BusinessOwnerFeatures/MyInvestment/pages/MyInvestmentPortfolioPage";
 import CreateIvestmentPage from "@/BusinessOwnerFeatures/MyInvestment/pages/CreateIvestmentPage"
+import MarketExchangePage from "@/pages/MarketExchangePage";
+import RemittanceLandingPage from "@/pages/RemittanceLandingPage";
+// import InvestPage from "@/pages/InvestPage";
 
 const AppRouter = () => {
   return (
@@ -62,6 +65,9 @@ const AppRouter = () => {
         <Route path="/login" element={<LoginPages />} />
         <Route path="/register" element={<RegisterPages />} />
 
+        <Route path="/market-exchange" element={<MarketExchangePage />} />
+        <Route path="/send-money" element={<RemittanceLandingPage />} />
+      
         {/* ===== DASHBOARD REDIRECT ===== */}
         <Route
           path="/dashboard"

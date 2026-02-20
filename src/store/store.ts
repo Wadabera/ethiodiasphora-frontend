@@ -14,6 +14,8 @@ import businessIPOReducer from "../BusinessOwnerFeatures/IPOManagement/slice/bus
 import ipoReducer from "../features/ipo/slices/IpoSlice";
 import adminIPOReducer from "../AdminFeatures/IPOManagement/slice/adminIPOSlice"; 
 import companiesReducer from "../features/companies/slices/companySlice";
+import banksReducer from "../features/banks/slices/bankSlice";
+import remittanceReducer from "../features/remittance/slices/remittanceSlice";
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -29,6 +31,8 @@ export const store = configureStore({
     companies: companiesReducer,
     investorIPO: investorIPOReducer,
     adminIPO: adminIPOReducer,
+    banks: banksReducer,
+    remittance: remittanceReducer,
   },
   // Remove apiMiddleware if you're not using it
   middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
