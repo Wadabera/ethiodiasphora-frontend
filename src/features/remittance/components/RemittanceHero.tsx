@@ -1,68 +1,40 @@
-// features/remittance/components/RemittanceHero.tsx
 import React from "react";
-import RemittanceStats from "./RemittanceStats";
+import { Star } from "lucide-react";
 
 interface RemittanceHeroProps {
-  selectedCurrency: string;
-  onCurrencyChange: (currency: string) => void;
-  totalProviders: number;
-  bestRate: number;
-  fastestTime: string;
+  title?: string;
+  trustpilotScore?: string;
+  reviewsCount?: string;
 }
 
 const RemittanceHero: React.FC<RemittanceHeroProps> = ({
-  selectedCurrency,
-  onCurrencyChange,
-  totalProviders,
-  bestRate,
-  fastestTime,
+  title = "International money transfer",
+  trustpilotScore = "Great",
+  reviewsCount = "82,565+ reviews",
 }) => {
   return (
-    <section className="bg-black text-[#FFD700] py-20 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            Send Money to Ethiopia
-          </h1>
-          <p className="text-xl text-yellow-400 mb-8 max-w-3xl mx-auto">
-            Compare real-time remittance rates from trusted providers. Find the
-            cheapest and fastest way to send money home.
-          </p>
+    <div className="text-center mb-12">
+      <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+        {title}
+      </h1>
+      <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
+        Fast, flexible and secure international money transfers across the
+        world. Save time and money when you send money internationally with us.
+      </p>
+
+      {/* Trustpilot */}
+      <div className="flex items-center justify-center gap-2 bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-full py-2 px-6 w-fit mx-auto">
+        <div className="flex items-center gap-1">
+          <Star className="w-5 h-5 fill-green-500 text-green-500" />
+          <Star className="w-5 h-5 fill-green-500 text-green-500" />
+          <Star className="w-5 h-5 fill-green-500 text-green-500" />
+          <Star className="w-5 h-5 fill-green-500 text-green-500" />
+          <Star className="w-5 h-5 fill-green-500 text-green-500" />
         </div>
-
-        {/* Stats */}
-        <RemittanceStats
-          totalProviders={totalProviders}
-          bestRate={bestRate}
-          fastestTime={fastestTime}
-        />
-
-        {/* Currency Quick Select */}
-        <div className="mt-12 flex flex-wrap justify-center gap-3">
-          {["USD", "EUR", "GBP", "AED", "CAD", "SAR"].map((currency) => (
-            <button
-              key={currency}
-              onClick={() => onCurrencyChange(currency)}
-              className={`
-                px-6 py-3 rounded-lg font-medium transition-all
-                ${
-                  selectedCurrency === currency
-                    ? "bg-[#FFD700] text-black"
-                    : "bg-gray-800 text-yellow-400 hover:bg-gray-700"
-                }
-              `}
-            >
-              {currency}
-            </button>
-          ))}
-        </div>
-
-        {/* Last Updated */}
-        <p className="text-center text-sm text-yellow-400 mt-8">
-          Last Updated: {new Date().toLocaleString()}
-        </p>
+        <span className="text-white font-semibold">{trustpilotScore}</span>
+        <span className="text-gray-400 text-sm">{reviewsCount}</span>
       </div>
-    </section>
+    </div>
   );
 };
 

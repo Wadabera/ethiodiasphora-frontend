@@ -1,23 +1,12 @@
-// features/remittance/services/mockRemittanceData.ts
 import type{
-  RemittanceRatesResponse,
-  RemittanceProvider,
-  Currency,
+  RatesResponse,
+  CompareResponse,
+  ProviderBasic,
+  ProviderDetail,
 } from "../types/remittance.types";
 
-// Provider logos (using emoji as placeholders - replace with actual image URLs)
-const logos = {
-  WorldRemit: "https://logo.clearbit.com/worldremit.com",
-  WesternUnion: "https://logo.clearbit.com/westernunion.com",
-  MoneyGram: "https://logo.clearbit.com/moneygram.com",
-  Dahabshiil: "https://logo.clearbit.com/dahabshiil.com",
-  TransferWise: "https://logo.clearbit.com/transferwise.com",
-  PayPal: "https://logo.clearbit.com/paypal.com",
-  Ria: "https://logo.clearbit.com/riafinancial.com",
-};
-
-// Mock Remittance Rates - matches your API structure
-export const mockRates: RemittanceRatesResponse = {
+// Mock data for /api/v1/remittance/rates
+export const mockRatesResponse: RatesResponse = {
   toCurrency: "ETB",
   rates: {
     USD: [
@@ -29,10 +18,6 @@ export const mockRates: RemittanceRatesResponse = {
         deliveryMethod: "bank_transfer",
         deliveryTime: "1-2 hours",
         lastUpdated: new Date().toISOString(),
-        logo: logos.WorldRemit,
-        rating: 4.5,
-        minAmount: 50,
-        maxAmount: 5000,
       },
       {
         provider: "Western Union",
@@ -40,51 +25,44 @@ export const mockRates: RemittanceRatesResponse = {
         fee: 8.0,
         feeType: "fixed",
         deliveryMethod: "cash_pickup",
-        deliveryTime: "10 minutes",
+        deliveryTime: "minutes",
         lastUpdated: new Date().toISOString(),
-        logo: logos.WesternUnion,
-        rating: 4.3,
-        minAmount: 50,
-        maxAmount: 3000,
       },
       {
         provider: "MoneyGram",
-        exchangeRate: 55.4,
-        fee: 5.99,
-        feeType: "fixed",
-        deliveryMethod: "bank_transfer",
+        exchangeRate: 55.3,
+        fee: 15.0,
+        feeType: "percentage",
+        deliveryMethod: "mobile_wallet",
         deliveryTime: "30 minutes",
         lastUpdated: new Date().toISOString(),
-        logo: logos.MoneyGram,
-        rating: 4.2,
-        minAmount: 50,
-        maxAmount: 4000,
       },
       {
-        provider: "Dahabshiil",
-        exchangeRate: 55.35,
-        fee: 6.5,
-        feeType: "fixed",
-        deliveryMethod: "cash_pickup",
-        deliveryTime: "2 hours",
-        lastUpdated: new Date().toISOString(),
-        logo: logos.Dahabshiil,
-        rating: 4.4,
-        minAmount: 100,
-        maxAmount: 10000,
-      },
-      {
-        provider: "TransferWise",
-        exchangeRate: 55.6,
-        fee: 3.5,
-        feeType: "percentage",
+        provider: "Abay Bank S.C.",
+        exchangeRate: 131.0083,
+        fee: 0,
+        feeType: "none",
         deliveryMethod: "bank_transfer",
-        deliveryTime: "1 day",
+        deliveryTime: "1-3 business days",
         lastUpdated: new Date().toISOString(),
-        logo: logos.TransferWise,
-        rating: 4.7,
-        minAmount: 100,
-        maxAmount: 15000,
+      },
+      {
+        provider: "Awash Bank S.C.",
+        exchangeRate: 131.0071,
+        fee: 0,
+        feeType: "none",
+        deliveryMethod: "bank_transfer",
+        deliveryTime: "1-3 business days",
+        lastUpdated: new Date().toISOString(),
+      },
+      {
+        provider: "Commercial Bank of Ethiopia",
+        exchangeRate: 130.85,
+        fee: 0,
+        feeType: "none",
+        deliveryMethod: "bank_transfer",
+        deliveryTime: "1-3 business days",
+        lastUpdated: new Date().toISOString(),
       },
     ],
     EUR: [
@@ -96,185 +74,261 @@ export const mockRates: RemittanceRatesResponse = {
         deliveryMethod: "bank_transfer",
         deliveryTime: "1-2 hours",
         lastUpdated: new Date().toISOString(),
-        logo: logos.WorldRemit,
-        rating: 4.5,
-        minAmount: 50,
-        maxAmount: 5000,
       },
       {
-        provider: "Western Union",
-        exchangeRate: 60.1,
-        fee: 7.0,
-        feeType: "fixed",
-        deliveryMethod: "cash_pickup",
-        deliveryTime: "10 minutes",
-        lastUpdated: new Date().toISOString(),
-        logo: logos.WesternUnion,
-        rating: 4.3,
-        minAmount: 50,
-        maxAmount: 3000,
-      },
-      {
-        provider: "TransferWise",
-        exchangeRate: 60.4,
-        fee: 2.99,
-        feeType: "percentage",
+        provider: "Abay Bank S.C.",
+        exchangeRate: 142.15,
+        fee: 0,
+        feeType: "none",
         deliveryMethod: "bank_transfer",
-        deliveryTime: "1 day",
+        deliveryTime: "1-3 business days",
         lastUpdated: new Date().toISOString(),
-        logo: logos.TransferWise,
-        rating: 4.7,
-        minAmount: 100,
-        maxAmount: 15000,
-      },
-    ],
-    GBP: [
-      {
-        provider: "WorldRemit",
-        exchangeRate: 70.5,
-        fee: 4.99,
-        feeType: "fixed",
-        deliveryMethod: "bank_transfer",
-        deliveryTime: "1-2 hours",
-        lastUpdated: new Date().toISOString(),
-        logo: logos.WorldRemit,
-        rating: 4.5,
-        minAmount: 50,
-        maxAmount: 5000,
-      },
-      {
-        provider: "TransferWise",
-        exchangeRate: 70.8,
-        fee: 3.5,
-        feeType: "percentage",
-        deliveryMethod: "bank_transfer",
-        deliveryTime: "1 day",
-        lastUpdated: new Date().toISOString(),
-        logo: logos.TransferWise,
-        rating: 4.7,
-        minAmount: 100,
-        maxAmount: 15000,
-      },
-    ],
-    AED: [
-      {
-        provider: "WorldRemit",
-        exchangeRate: 15.1,
-        fee: 5.0,
-        feeType: "fixed",
-        deliveryMethod: "bank_transfer",
-        deliveryTime: "1-2 hours",
-        lastUpdated: new Date().toISOString(),
-        logo: logos.WorldRemit,
-        rating: 4.5,
-        minAmount: 200,
-        maxAmount: 20000,
-      },
-      {
-        provider: "Western Union",
-        exchangeRate: 15.05,
-        fee: 7.0,
-        feeType: "fixed",
-        deliveryMethod: "cash_pickup",
-        deliveryTime: "10 minutes",
-        lastUpdated: new Date().toISOString(),
-        logo: logos.WesternUnion,
-        rating: 4.3,
-        minAmount: 200,
-        maxAmount: 15000,
-      },
-      {
-        provider: "MoneyGram",
-        exchangeRate: 15.08,
-        fee: 6.0,
-        feeType: "fixed",
-        deliveryMethod: "bank_transfer",
-        deliveryTime: "30 minutes",
-        lastUpdated: new Date().toISOString(),
-        logo: logos.MoneyGram,
-        rating: 4.2,
-        minAmount: 200,
-        maxAmount: 12000,
-      },
-    ],
-    CAD: [
-      {
-        provider: "WorldRemit",
-        exchangeRate: 41.2,
-        fee: 4.99,
-        feeType: "fixed",
-        deliveryMethod: "bank_transfer",
-        deliveryTime: "1-2 hours",
-        lastUpdated: new Date().toISOString(),
-        logo: logos.WorldRemit,
-        rating: 4.5,
-        minAmount: 50,
-        maxAmount: 5000,
-      },
-    ],
-    SAR: [
-      {
-        provider: "Western Union",
-        exchangeRate: 14.75,
-        fee: 6.0,
-        feeType: "fixed",
-        deliveryMethod: "cash_pickup",
-        deliveryTime: "10 minutes",
-        lastUpdated: new Date().toISOString(),
-        logo: logos.WesternUnion,
-        rating: 4.3,
-        minAmount: 100,
-        maxAmount: 10000,
       },
     ],
   },
   lastUpdated: new Date().toISOString(),
 };
 
-// Transform rates to providers format for easier display
-export const transformRatesToProviders = (): RemittanceProvider[] => {
-  const providers: RemittanceProvider[] = [];
-
-  Object.entries(mockRates.rates).forEach(([currency, rates]) => {
-    rates.forEach((rate) => {
-      providers.push({
-        provider: rate.provider,
-        fromCurrency: currency as Currency,
-        toCurrency: "ETB",
-        exchangeRate: rate.exchangeRate,
-        fee: rate.fee,
-        feeType: rate.feeType,
-        deliveryMethod: rate.deliveryMethod,
-        deliveryTime: rate.deliveryTime,
-        logo: rate.logo,
-        rating: rate.rating,
-        minAmount: rate.minAmount,
-        maxAmount: rate.maxAmount,
-      });
-    });
-  });
-
-  return providers;
+// Mock data for /api/v1/remittance/compare?from=USD&amount=1000
+export const mockCompareResponse: CompareResponse = {
+  fromCurrency: "USD",
+  toCurrency: "ETB",
+  sendAmount: 1000,
+  internationalProviders: [
+    {
+      type: "international_provider",
+      provider: "WorldRemit",
+      exchangeRate: 55.5,
+      fee: 4.99,
+      feeType: "fixed",
+      amountReceived: (1000 - 4.99) * 55.5,
+      deliveryMethod: "bank_transfer",
+      deliveryTime: "1-2 hours",
+      lastUpdated: new Date().toISOString(),
+    },
+    {
+      type: "international_provider",
+      provider: "Western Union",
+      exchangeRate: 55.25,
+      fee: 8.0,
+      feeType: "fixed",
+      amountReceived: (1000 - 8) * 55.25,
+      deliveryMethod: "cash_pickup",
+      deliveryTime: "minutes",
+      lastUpdated: new Date().toISOString(),
+    },
+    {
+      type: "international_provider",
+      provider: "MoneyGram",
+      exchangeRate: 55.3,
+      fee: 15.0,
+      feeType: "percentage",
+      amountReceived: (1000 - 1000 * 0.15) * 55.3,
+      deliveryMethod: "mobile_wallet",
+      deliveryTime: "30 minutes",
+      lastUpdated: new Date().toISOString(),
+    },
+  ],
+  ethiopianBanks: [
+    {
+      type: "ethiopian_bank",
+      provider: "Abay Bank S.C.",
+      exchangeRate: 131.0083,
+      fee: 0,
+      feeType: "none",
+      amountReceived: 1000 * 131.0083,
+      deliveryMethod: "bank_transfer",
+      deliveryTime: "1-3 business days",
+      lastUpdated: new Date().toISOString(),
+      logo: "/assets/banks/abay-bank.png",
+      rateType: "buying_rate",
+    },
+    {
+      type: "ethiopian_bank",
+      provider: "Awash Bank S.C.",
+      exchangeRate: 131.0071,
+      fee: 0,
+      feeType: "none",
+      amountReceived: 1000 * 131.0071,
+      deliveryMethod: "bank_transfer",
+      deliveryTime: "1-3 business days",
+      lastUpdated: new Date().toISOString(),
+      logo: "/assets/banks/awash-bank.png",
+      rateType: "buying_rate",
+    },
+    {
+      type: "ethiopian_bank",
+      provider: "Commercial Bank of Ethiopia",
+      exchangeRate: 130.85,
+      fee: 0,
+      feeType: "none",
+      amountReceived: 1000 * 130.85,
+      deliveryMethod: "bank_transfer",
+      deliveryTime: "1-3 business days",
+      lastUpdated: new Date().toISOString(),
+      logo: "/assets/banks/cbe.png",
+      rateType: "buying_rate",
+    },
+  ],
+  allOptions: [
+    {
+      type: "ethiopian_bank",
+      provider: "Abay Bank S.C.",
+      amountReceived: 1000 * 131.0083,
+    },
+    {
+      type: "ethiopian_bank",
+      provider: "Awash Bank S.C.",
+      amountReceived: 1000 * 131.0071,
+    },
+    {
+      type: "international_provider",
+      provider: "WorldRemit",
+      amountReceived: (1000 - 4.99) * 55.5,
+    },
+  ],
+  bestOption: {
+    type: "ethiopian_bank",
+    provider: "Abay Bank S.C.",
+    exchangeRate: 131.0083,
+    amountReceived: 1000 * 131.0083,
+  },
+  marketInsights: {
+    bestInternational: {
+      provider: "WorldRemit",
+      amountReceived: (1000 - 4.99) * 55.5,
+    },
+    bestBank: {
+      provider: "Abay Bank S.C.",
+      amountReceived: 1000 * 131.0083,
+    },
+    savings: 1000 * 131.0083 - (1000 - 4.99) * 55.5,
+  },
+  lastUpdated: new Date().toISOString(),
 };
 
-// Mock providers list
-export const mockProviders: RemittanceProvider[] = transformRatesToProviders();
+// Mock data for /api/v1/remittance/providers
+export const mockProvidersResponse: ProviderBasic[] = [
+  {
+    provider: "WorldRemit",
+    fromCurrency: "USD",
+    toCurrency: "ETB",
+    exchangeRate: 55.5,
+    fee: 4.99,
+    feeType: "fixed",
+    deliveryMethod: "bank_transfer",
+    deliveryTime: "1-2 hours",
+    lastUpdated: new Date().toISOString(),
+  },
+  {
+    provider: "WorldRemit",
+    fromCurrency: "EUR",
+    toCurrency: "ETB",
+    exchangeRate: 60.25,
+    fee: 3.99,
+    feeType: "fixed",
+    deliveryMethod: "bank_transfer",
+    deliveryTime: "1-2 hours",
+    lastUpdated: new Date().toISOString(),
+  },
+  {
+    provider: "Western Union",
+    fromCurrency: "USD",
+    toCurrency: "ETB",
+    exchangeRate: 55.25,
+    fee: 8.0,
+    feeType: "fixed",
+    deliveryMethod: "cash_pickup",
+    deliveryTime: "minutes",
+    lastUpdated: new Date().toISOString(),
+  },
+  {
+    provider: "Abay Bank S.C.",
+    fromCurrency: "USD",
+    toCurrency: "ETB",
+    exchangeRate: 131.0083,
+    fee: 0,
+    feeType: "none",
+    deliveryMethod: "bank_transfer",
+    deliveryTime: "1-3 business days",
+    lastUpdated: new Date().toISOString(),
+  },
+  {
+    provider: "Abay Bank S.C.",
+    fromCurrency: "EUR",
+    toCurrency: "ETB",
+    exchangeRate: 142.15,
+    fee: 0,
+    feeType: "none",
+    deliveryMethod: "bank_transfer",
+    deliveryTime: "1-3 business days",
+    lastUpdated: new Date().toISOString(),
+  },
+  {
+    provider: "Awash Bank S.C.",
+    fromCurrency: "USD",
+    toCurrency: "ETB",
+    exchangeRate: 131.0071,
+    fee: 0,
+    feeType: "none",
+    deliveryMethod: "bank_transfer",
+    deliveryTime: "1-3 business days",
+    lastUpdated: new Date().toISOString(),
+  },
+];
 
-// Helper function to calculate receive amount
-export const calculateReceiveAmount = (
-  sendAmount: number,
-  exchangeRate: number,
-  fee: number,
-  feeType: "fixed" | "percentage",
-) => {
-  const calculatedFee = feeType === "fixed" ? fee : (sendAmount * fee) / 100;
-  const amountAfterFee = sendAmount - calculatedFee;
-  const receiveAmount = amountAfterFee * exchangeRate;
+// Mock data for /api/v1/remittance/providers/WorldRemit
+export const mockProviderDetailsResponse: ProviderDetail[] = [
+  {
+    provider: "WorldRemit",
+    fromCurrency: "USD",
+    toCurrency: "ETB",
+    exchangeRate: 55.5,
+    fee: 4.99,
+    feeType: "fixed",
+    deliveryMethod: "bank_transfer",
+    deliveryTime: "1-2 hours",
+  },
+  {
+    provider: "WorldRemit",
+    fromCurrency: "EUR",
+    toCurrency: "ETB",
+    exchangeRate: 60.25,
+    fee: 3.99,
+    feeType: "fixed",
+    deliveryMethod: "bank_transfer",
+    deliveryTime: "1-2 hours",
+  },
+  {
+    provider: "WorldRemit",
+    fromCurrency: "GBP",
+    toCurrency: "ETB",
+    exchangeRate: 70.15,
+    fee: 4.99,
+    feeType: "fixed",
+    deliveryMethod: "bank_transfer",
+    deliveryTime: "1-2 hours",
+  },
+];
 
-  return {
-    sendAmount,
-    receiveAmount: Math.round(receiveAmount * 100) / 100,
-    fee: calculatedFee,
-    exchangeRate,
-  };
+// Helper function to get unique providers list
+export const getUniqueProviders = () => {
+  const providers = new Set();
+  mockRatesResponse.rates.USD.forEach((rate) => providers.add(rate.provider));
+  mockRatesResponse.rates.EUR.forEach((rate) => providers.add(rate.provider));
+  return Array.from(providers);
+};
+
+// Helper to get provider type
+export const getProviderType = (
+  providerName: string,
+): "international_provider" | "ethiopian_bank" => {
+  const banks = [
+    "Abay Bank S.C.",
+    "Awash Bank S.C.",
+    "Commercial Bank of Ethiopia",
+  ];
+  return banks.includes(providerName)
+    ? "ethiopian_bank"
+    : "international_provider";
 };
