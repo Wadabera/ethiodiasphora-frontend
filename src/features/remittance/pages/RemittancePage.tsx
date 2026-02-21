@@ -1,10 +1,10 @@
+// src/features/remittance/pages/RemittancePage.tsx
 import React, { useState, useEffect } from "react";
-import { useRemittance } from "../hooks/useRemittance";
+import { useRemittance } from "../hooks/useRemittance"; // 👈 Default import (no curly braces)
 import RemittanceHero from "../components/RemittanceHero";
 import RemittanceCalculator from "../components/RemittanceCalculator";
 import RemittanceStats from "../components/RemittanceStats";
 import RemittanceComparisonTable from "../components/RemittanceComparisonTable";
-
 import DeliveryMethodsGrid from "../components/DeliveryMethodsGrid";
 import LoadingState from "../components/LoadingState";
 import { RefreshCw } from "lucide-react";
@@ -42,7 +42,6 @@ const RemittancePage: React.FC = () => {
   };
 
   const handleProviderSelect = (provider: any) => {
-    // Convert DisplayProvider to ProviderDetail format
     selectProvider({
       provider: provider.name,
       fromCurrency: calculatorInput.fromCurrency,
@@ -54,7 +53,6 @@ const RemittancePage: React.FC = () => {
       deliveryTime: provider.deliveryTime,
     });
 
-    // Scroll to calculator
     document
       .getElementById("calculator")
       ?.scrollIntoView({ behavior: "smooth" });
@@ -75,15 +73,12 @@ const RemittancePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Background Effects */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl -z-10"></div>
       <div className="fixed bottom-0 right-0 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl -z-10"></div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Hero Section */}
         <RemittanceHero />
 
-        {/* Stats Section */}
         {compareData && (
           <RemittanceStats
             bestRate={`${compareData.bestOption.exchangeRate.toFixed(2)} ETB`}
@@ -95,9 +90,7 @@ const RemittancePage: React.FC = () => {
           />
         )}
 
-        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Calculator */}
           <div id="calculator">
             <RemittanceCalculator
               fromCurrency={calculatorInput.fromCurrency}
@@ -130,7 +123,6 @@ const RemittancePage: React.FC = () => {
             />
           </div>
 
-          {/* Best Options Preview */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">Best Options</h2>
@@ -198,7 +190,6 @@ const RemittancePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Comparison Table */}
         {filteredProviders.length > 0 && (
           <div className="mb-12">
             <RemittanceComparisonTable
@@ -208,10 +199,8 @@ const RemittancePage: React.FC = () => {
           </div>
         )}
 
-        {/* Delivery Methods */}
         <DeliveryMethodsGrid />
 
-        {/* Error Display */}
         {error && (
           <div className="mt-8 p-4 bg-red-900/20 border border-red-800 rounded-xl">
             <p className="text-red-400 text-center">{error}</p>
