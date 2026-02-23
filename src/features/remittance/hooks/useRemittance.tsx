@@ -1,15 +1,17 @@
+// src/features/remittance/hooks/useRemittance.ts
 import { useCallback, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
 import {
   fetchRemittanceRates,
   fetchRemittanceCompare,
   fetchAllProviders,
-  fetchProviderByName,
-  selectProvider,
+  // fetchProviderByName,
   setCalculatorInput,
   setFilters,
   clearFilters,
+  selectProvider,
   clearComparison,
+  setViewMode,
 } from "../slices/remittanceSlice";
 import type {
   CalculatorInput,
@@ -19,59 +21,50 @@ import type {
 } from "../types/remittance.types";
 
 interface UseRemittanceReturn {
-  // Data from endpoints
-  ratesData: any;
+  // Data
   compareData: any;
-  providersList: any[];
-  providerDetails: any[] | null;
-
-  // UI State
   displayProviders: DisplayProvider[];
   selectedProvider: ProviderDetail | null;
   loading: boolean;
   error: string | null;
   filters: RemittanceFilters;
   calculatorInput: CalculatorInput;
+  viewMode: "card" | "table";
 
-  // API Functions
-  fetchRates: () => Promise<void>;
+  // Actions
   fetchCompare: (fromCurrency?: string, amount?: number) => Promise<void>;
-  fetchAllProviders: () => Promise<void>;
-  fetchProviderByName: (provider: string) => Promise<void>;
-
-  // UI Actions
   setCalculatorInput: (input: Partial<CalculatorInput>) => void;
   setFilters: (filters: Partial<RemittanceFilters>) => void;
   clearFilters: () => void;
   selectProvider: (provider: ProviderDetail | null) => void;
   clearComparison: () => void;
+  setViewMode: (mode: "card" | "table") => void;
 
   // Helpers
   getFilteredProviders: () => DisplayProvider[];
   getBestProvider: () => DisplayProvider | undefined;
   getSavings: () => { amount: number; percentage: number } | null;
+  getBestRate: () => number;
+  getFastestDelivery: () => string;
+  getLowestFee: () => string;
+  handleDownloadApp: () => void;
 }
 
+// This is a named export - so you need curly braces when importing
 export const useRemittance = (): UseRemittanceReturn => {
   const dispatch = useAppDispatch();
   const {
-    ratesData,
     compareData,
-    providersList,
-    providerDetails,
     displayProviders,
     selectedProvider,
     loading,
     error,
     filters,
     calculatorInput,
+    viewMode,
   } = useAppSelector((state) => state.remittance);
 
-  // ===== API Functions =====
-  const fetchRates = useCallback(async () => {
-    await dispatch(fetchRemittanceRates()).unwrap();
-  }, [dispatch]);
-
+  // Fetch compare data
   const fetchCompare = useCallback(
     async (fromCurrency: string = "USD", amount: number = 1000) => {
       await dispatch(fetchRemittanceCompare({ fromCurrency, amount })).unwrap();
@@ -79,53 +72,83 @@ export const useRemittance = (): UseRemittanceReturn => {
     [dispatch],
   );
 
-  const fetchAllProvidersAction = useCallback(async () => {
-    await dispatch(fetchAllProviders()).unwrap();
-  }, [dispatch]);
-
-  const fetchProviderByNameAction = useCallback(
-    async (provider: string) => {
-      await dispatch(fetchProviderByName(provider)).unwrap();
-    },
-    [dispatch],
-  );
-
-  // ===== UI Actions =====
-  const setCalculatorInputAction = useCallback(
+  // UI Actions
+  const updateCalculatorInput = useCallback(
     (input: Partial<CalculatorInput>) => {
       dispatch(setCalculatorInput(input));
     },
     [dispatch],
   );
 
-  const setFiltersAction = useCallback(
+  const updateFilters = useCallback(
     (newFilters: Partial<RemittanceFilters>) => {
       dispatch(setFilters(newFilters));
     },
     [dispatch],
   );
 
-  const clearFiltersAction = useCallback(() => {
+  const clearAllFilters = useCallback(() => {
     dispatch(clearFilters());
   }, [dispatch]);
 
-  const selectProviderAction = useCallback(
+  const handleSelectProvider = useCallback(
     (provider: ProviderDetail | null) => {
       dispatch(selectProvider(provider));
     },
     [dispatch],
   );
 
-  const clearComparisonAction = useCallback(() => {
+  const handleClearComparison = useCallback(() => {
     dispatch(clearComparison());
   }, [dispatch]);
 
-  // ===== Helpers =====
+  const handleSetViewMode = useCallback(
+    (mode: "card" | "table") => {
+      dispatch(setViewMode(mode));
+    },
+    [dispatch],
+  );
+
+  // Handle download app
+  const handleDownloadApp = useCallback(() => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.open(
+          "https://apps.apple.com/app/ethio-diaspora/id123456789",
+          "_blank",
+        );
+      } else if (/Android/i.test(navigator.userAgent)) {
+        window.open(
+          "https://play.google.com/store/apps/details?id=com.ethiodiaspora.app",
+          "_blank",
+        );
+      }
+    } else {
+      window.open(
+        "https://play.google.com/store/apps/details?id=com.ethiodiaspora.app",
+        "_blank",
+      );
+    }
+  }, []);
+
+  // Helper functions
   const getFilteredProviders = useCallback(() => {
     let filtered = [...displayProviders];
 
     if (filters.type && filters.type !== "all") {
-      filtered = filtered.filter((p) => p.type === filters.type);
+      filtered = filtered.filter((p) =>
+        filters.type === "international"
+          ? p.type === "international_provider"
+          : p.type === "ethiopian_bank",
+      );
+    }
+
+    if (filters.provider) {
+      filtered = filtered.filter((p) =>
+        p.name.toLowerCase().includes(filters.provider!.toLowerCase()),
+      );
     }
 
     if (filters.minRate) {
@@ -157,44 +180,69 @@ export const useRemittance = (): UseRemittanceReturn => {
     };
   }, [compareData]);
 
+  const getBestRate = useCallback(() => {
+    if (displayProviders.length === 0) return 0;
+    return Math.max(...displayProviders.map((p) => p.exchangeRate));
+  }, [displayProviders]);
+
+  const getFastestDelivery = useCallback(() => {
+    if (displayProviders.length === 0) return "N/A";
+    const fastest = displayProviders.reduce((fastest, current) => {
+      const getMinutes = (time: string) => {
+        if (time.includes("minutes")) return 1;
+        if (time.includes("hour")) return 60;
+        if (time.includes("days")) return 1440;
+        return 9999;
+      };
+      return getMinutes(current.deliveryTime) < getMinutes(fastest.deliveryTime)
+        ? current
+        : fastest;
+    });
+    return fastest.deliveryTime;
+  }, [displayProviders]);
+
+  const getLowestFee = useCallback(() => {
+    if (displayProviders.length === 0) return "N/A";
+    const lowest = displayProviders.reduce((lowest, current) =>
+      current.fee < lowest.fee ? current : lowest,
+    );
+    return lowest.fee === 0 ? "No fee" : `$${lowest.fee}`;
+  }, [displayProviders]);
+
   // Load initial data
   useEffect(() => {
     fetchCompare("USD", 1000);
-    fetchAllProvidersAction();
-    fetchRates();
+    dispatch(fetchAllProviders());
+    dispatch(fetchRemittanceRates());
   }, []);
 
   return {
     // Data
-    ratesData,
     compareData,
-    providersList,
-    providerDetails,
-
-    // UI State
     displayProviders,
     selectedProvider,
     loading,
     error,
     filters,
     calculatorInput,
+    viewMode,
 
-    // API Functions
-    fetchRates,
+    // Actions
     fetchCompare,
-    fetchAllProviders: fetchAllProvidersAction,
-    fetchProviderByName: fetchProviderByNameAction,
-
-    // UI Actions
-    setCalculatorInput: setCalculatorInputAction,
-    setFilters: setFiltersAction,
-    clearFilters: clearFiltersAction,
-    selectProvider: selectProviderAction,
-    clearComparison: clearComparisonAction,
+    setCalculatorInput: updateCalculatorInput,
+    setFilters: updateFilters,
+    clearFilters: clearAllFilters,
+    selectProvider: handleSelectProvider,
+    clearComparison: handleClearComparison,
+    setViewMode: handleSetViewMode,
 
     // Helpers
     getFilteredProviders,
     getBestProvider,
     getSavings,
+    getBestRate,
+    getFastestDelivery,
+    getLowestFee,
+    handleDownloadApp,
   };
 };

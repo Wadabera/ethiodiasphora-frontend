@@ -1,6 +1,8 @@
+// src/features/remittance/components/RemittanceCalculator.tsx
 import React, { useState, useEffect } from "react";
-import { ArrowDownUp, Clock,  Percent, Info } from "lucide-react";
+import { ArrowDownUp, Clock, Percent, Info, CheckCircle } from "lucide-react";
 import type { RemittanceProvider } from "../types/remittance.types";
+import SendMoney from "./SendMoney";
 
 interface RemittanceCalculatorProps {
   fromCurrency?: string;
@@ -22,7 +24,7 @@ const RemittanceCalculator: React.FC<RemittanceCalculatorProps> = ({
   className = "",
 }) => {
   const [amount, setAmount] = useState<number>(1000);
-  const [receiveMethod, setReceiveMethod] = useState<string>("bank_transfer");
+  const [receiveMethod, setReceiveMethod] = useState<string>("debit_card");
   const [fee, setFee] = useState<number>(0);
   const [transferTime, setTransferTime] = useState<string>("Within 1 hour");
   const [isSwapping, setIsSwapping] = useState<boolean>(false);
@@ -31,7 +33,6 @@ const RemittanceCalculator: React.FC<RemittanceCalculatorProps> = ({
 
   const handleSwapCurrencies = () => {
     setIsSwapping(true);
-    // Swap logic would go here
     setTimeout(() => setIsSwapping(false), 300);
   };
 
@@ -48,16 +49,31 @@ const RemittanceCalculator: React.FC<RemittanceCalculatorProps> = ({
   };
 
   const methods = [
-    { value: "bank_transfer", label: "Bank Transfer", time: "1-2 hours" },
-    { value: "cash_pickup", label: "Cash Pickup", time: "minutes" },
-    { value: "mobile_wallet", label: "Mobile Wallet", time: "instant" },
-    { value: "debit_card", label: "Debit Card Deposit", time: "Within 1 hour" },
+    {
+      value: "bank_transfer",
+      label: "Bank Transfer",
+      time: "1-2 hours",
+      fee: 2.99,
+    },
+    { value: "cash_pickup", label: "Cash Pickup", time: "minutes", fee: 1.99 },
+    {
+      value: "mobile_wallet",
+      label: "Mobile Wallet",
+      time: "instant",
+      fee: 1.99,
+    },
+    {
+      value: "debit_card",
+      label: "Debit Card Deposit",
+      time: "Within 1 hour",
+      fee: 0,
+    },
   ];
 
   useEffect(() => {
     const selectedMethod = methods.find((m) => m.value === receiveMethod);
     setTransferTime(selectedMethod?.time || "Within 1 hour");
-    setFee(receiveMethod === "debit_card" ? 0 : 2.99);
+    setFee(selectedMethod?.fee || 0);
   }, [receiveMethod]);
 
   const handleSendMoney = () => {
@@ -68,35 +84,63 @@ const RemittanceCalculator: React.FC<RemittanceCalculatorProps> = ({
     onSendMoney?.();
   };
 
+  // Get provider name safely
+  const selectedProviderName =
+    selectedProvider?.provider || selectedProvider?.name;
+
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
+
   return (
     <div
       className={`bg-gray-900 border border-gray-800 rounded-2xl p-6 md:p-8 shadow-2xl ${className}`}
     >
-      {/* Selected Provider Indicator */}
-      {selectedProvider && (
-        <div className="mb-6 p-3 bg-gradient-to-r from-yellow-600/10 to-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-center gap-3">
-          {selectedProvider.logo ? (
-            <img
-              src={selectedProvider.logo}
-              alt={selectedProvider.name}
-              className="w-8 h-8 rounded-full"
-            />
-          ) : (
-            <div className="w-8 h-8 bg-gradient-to-r from-yellow-600 to-yellow-500 rounded-full flex items-center justify-center">
-              <span className="text-xs font-bold text-black">
-                {selectedProvider.name.substring(0, 2).toUpperCase()}
+      {/* Selected Provider Indicator - Prominently Displayed at Top */}
+      {selectedProvider ? (
+        <div className="mb-6 p-4 bg-gradient-to-r from-yellow-600/20 to-yellow-500/20 border-2 border-yellow-500/50 rounded-xl flex items-center gap-4">
+          <div className="relative">
+            <div className="absolute inset-0 bg-yellow-500/30 rounded-full blur-md"></div>
+            {selectedProvider.logo ? (
+              <img
+                src={selectedProvider.logo}
+                alt={selectedProviderName}
+                className="w-14 h-14 rounded-full object-contain bg-white p-1 relative z-10 border-2 border-yellow-500"
+              />
+            ) : (
+              <div className="w-14 h-14 bg-gradient-to-r from-yellow-600 to-yellow-500 rounded-full flex items-center justify-center relative z-10 border-2 border-yellow-500">
+                <span className="text-lg font-bold text-black">
+                  {selectedProviderName?.substring(0, 2).toUpperCase() || "P"}
+                </span>
+              </div>
+            )}
+            <CheckCircle className="absolute -bottom-1 -right-1 w-5 h-5 text-green-500 bg-gray-900 rounded-full" />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-yellow-500 mb-1">SELECTED PROVIDER</p>
+            <h3 className="text-xl font-bold text-white">
+              {selectedProviderName}
+            </h3>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded-full">
+                Rate: {exchangeRate.toFixed(4)}
+              </span>
+              <span className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded-full">
+                Fee: {fee === 0 ? "No fee" : `$${fee}`}
               </span>
             </div>
-          )}
-          <div className="flex-1">
-            <p className="text-sm text-white">
-              Sending with{" "}
-              <span className="font-bold text-yellow-500">
-                {selectedProvider.name}
-              </span>
-            </p>
           </div>
-          <Info className="w-4 h-4 text-gray-500" />
+          <Info className="w-5 h-5 text-gray-500" />
+        </div>
+      ) : (
+        <div className="mb-6 p-4 bg-gray-800/30 border border-dashed border-gray-700 rounded-xl">
+          <p className="text-sm text-gray-400 text-center">
+            👆 Select a provider from the list below to start sending money
+          </p>
         </div>
       )}
 
@@ -119,7 +163,7 @@ const RemittanceCalculator: React.FC<RemittanceCalculatorProps> = ({
             <span className="text-white font-bold">{fromCurrency}</span>
             <button
               onClick={handleSwapCurrencies}
-              className={`p-1 hover:bg-gray-700 rounded-lg transition-transform ${isSwapping ? "rotate-180" : ""}`}
+              className={`p-1 hover:bg-gray-700 rounded-lg transition-transform duration-300 ${isSwapping ? "rotate-180" : ""}`}
             >
               <ArrowDownUp className="w-4 h-4 text-yellow-500" />
             </button>
@@ -138,7 +182,7 @@ const RemittanceCalculator: React.FC<RemittanceCalculatorProps> = ({
         </label>
         <div className="bg-gradient-to-r from-yellow-500/10 to-yellow-600/10 border border-yellow-500/30 rounded-xl p-4">
           <div className="text-3xl md:text-4xl font-bold text-white">
-            {receivedAmount.toFixed(2)}{" "}
+            {formatCurrency(receivedAmount)}{" "}
             <span className="text-lg text-gray-400">{toCurrency}</span>
           </div>
         </div>
@@ -174,7 +218,7 @@ const RemittanceCalculator: React.FC<RemittanceCalculatorProps> = ({
             Fee
           </div>
           <p className="text-white font-semibold">
-            {fee === 0 ? "0" : fee} {fromCurrency}
+            {fee === 0 ? "No fee" : `${fee} ${fromCurrency}`}
           </p>
         </div>
         <div className="bg-gray-800/50 rounded-xl p-3">
@@ -197,24 +241,13 @@ const RemittanceCalculator: React.FC<RemittanceCalculatorProps> = ({
       </div>
 
       {/* Send Money Button */}
-      <button
-        onClick={handleSendMoney}
-        disabled={!selectedProvider}
-        className={`w-full mt-6 py-4 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black font-bold rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-yellow-600/20 ${
-          !selectedProvider
-            ? "opacity-50 cursor-not-allowed"
-            : "hover:from-yellow-500 hover:to-yellow-600"
-        }`}
-      >
-        {selectedProvider ? "Send Money" : "Select a provider first"}
-      </button>
-
-      {/* Provider hint */}
-      {!selectedProvider && (
-        <p className="text-xs text-gray-500 text-center mt-3">
-          👆 Select a provider from the table below to continue
-        </p>
-      )}
+      <SendMoney
+        amount={amount}
+        fromCurrency={fromCurrency}
+        toCurrency={toCurrency}
+        providerName={selectedProviderName}
+        onSend={handleSendMoney}
+      />
     </div>
   );
 };

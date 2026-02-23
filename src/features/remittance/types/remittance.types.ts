@@ -1,6 +1,5 @@
-// ==================== RATES ENDPOINT (/api/v1/remittance/rates) ====================
-
-export interface RateEntry {
+// src/features/remittance/types/remittance.types.ts
+export interface ExchangeRate {
   provider: string;
   exchangeRate: number;
   fee: number;
@@ -13,16 +12,12 @@ export interface RateEntry {
 export interface RatesResponse {
   toCurrency: string;
   rates: {
-    USD: RateEntry[];
-    EUR: RateEntry[];
-    GBP?: RateEntry[];
+    [key: string]: ExchangeRate[];
   };
   lastUpdated: string;
 }
 
-// ==================== COMPARE ENDPOINT (/api/v1/remittance/compare) ====================
-
-export interface CompareProvider {
+export interface ProviderRate {
   type: "international_provider" | "ethiopian_bank";
   provider: string;
   exchangeRate: number;
@@ -33,20 +28,25 @@ export interface CompareProvider {
   deliveryTime: string;
   lastUpdated: string;
   logo?: string;
-  rateType?: "buying_rate" | "selling_rate";
+  rateType?: "buying_rate" | "selling_rate" | "transaction_rate";
+  // Bank specific rates
+  cashBuying?: number;
+  cashSelling?: number;
+  transactionBuying?: number;
+  transactionSelling?: number;
 }
 
 export interface CompareResponse {
   fromCurrency: string;
   toCurrency: string;
   sendAmount: number;
-  internationalProviders: CompareProvider[];
-  ethiopianBanks: CompareProvider[];
-  allOptions: {
+  internationalProviders: ProviderRate[];
+  ethiopianBanks: ProviderRate[];
+  allOptions: Array<{
     type: string;
     provider: string;
     amountReceived: number;
-  }[];
+  }>;
   bestOption: {
     type: string;
     provider: string;
@@ -54,20 +54,12 @@ export interface CompareResponse {
     amountReceived: number;
   };
   marketInsights: {
-    bestInternational: {
-      provider: string;
-      amountReceived: number;
-    };
-    bestBank: {
-      provider: string;
-      amountReceived: number;
-    };
+    bestInternational: { provider: string; amountReceived: number };
+    bestBank: { provider: string; amountReceived: number };
     savings: number;
   };
   lastUpdated: string;
 }
-
-// ==================== PROVIDERS ENDPOINT (/api/v1/remittance/providers) ====================
 
 export interface ProviderBasic {
   provider: string;
@@ -79,23 +71,15 @@ export interface ProviderBasic {
   deliveryMethod: string;
   deliveryTime: string;
   lastUpdated: string;
+  logo?: string;
 }
 
-// ==================== PROVIDER DETAILS ENDPOINT (/api/v1/remittance/providers/:provider) ====================
-
-export interface ProviderDetail {
-  provider: string;
-  fromCurrency: string;
-  toCurrency: string;
-  exchangeRate: number;
-  fee: number;
-  feeType: "fixed" | "percentage" | "none";
-  deliveryMethod: string;
-  deliveryTime: string;
-  lastUpdated?: string;
+export interface ProviderDetail extends ProviderBasic {
+  // Additional provider details
+  description?: string;
+  rating?: number;
+  totalTransfers?: number;
 }
-
-// ==================== UI TYPES ====================
 
 export interface CalculatorInput {
   fromCurrency: string;
@@ -105,8 +89,8 @@ export interface CalculatorInput {
 }
 
 export interface RemittanceFilters {
-  type?: "international_provider" | "ethiopian_bank" | "all";
-  provider?: string[];
+  type: "all" | "international" | "banks";
+  provider?: string;
   minRate?: number;
   maxFee?: number;
 }
@@ -122,6 +106,43 @@ export interface DisplayProvider {
   amountReceived: number;
   deliveryMethod: string;
   deliveryTime: string;
-  rating?: number;
-  isBest?: boolean;
+  rating: number;
+  isBest: boolean;
+  // Bank specific fields
+  cashBuying?: number;
+  cashSelling?: number;
+  transactionBuying?: number;
+  transactionSelling?: number;
+  cashBuyingETB?: number;
+  cashSellingETB?: number;
+  transactionBuyingETB?: number;
+  transactionSellingETB?: number;
+}
+
+export interface RemittanceProvider {
+  provider: string;
+  name?: string;
+  fromCurrency: string;
+  toCurrency: string;
+  exchangeRate: number;
+  fee: number;
+  feeType: "fixed" | "percentage" | "none";
+  deliveryMethod: string;
+  deliveryTime: string;
+  lastUpdated: string;
+  logo?: string;
+}
+
+export interface RemittanceState {
+  ratesData: RatesResponse | null;
+  compareData: CompareResponse | null;
+  providersList: ProviderBasic[];
+  providerDetails: ProviderDetail[] | null;
+  loading: boolean;
+  error: string | null;
+  selectedProvider: RemittanceProvider | null;
+  displayProviders: DisplayProvider[];
+  calculatorInput: CalculatorInput;
+  filters: RemittanceFilters;
+  viewMode: "card" | "table";
 }

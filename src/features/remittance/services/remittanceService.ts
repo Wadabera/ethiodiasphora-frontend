@@ -1,171 +1,85 @@
+// src/features/remittance/services/remittanceService.ts
 import api from "@/services/api";
 import {
-  mockRemittanceComparison,
-  mockProviders,
-  mockDeliveryMethods,
-  mockProviderRates,
+  mockCompareResponse,
+  mockRatesResponse,
+  mockProvidersResponse,
+  mockProviderDetailsResponse,
 } from "./mockRemittanceData";
 import type {
-  RemittanceComparison,
-  RemittanceProvider,
-  DeliveryMethod,
-  ProviderRate,
+  RatesResponse,
+  CompareResponse,
+  ProviderBasic,
+  ProviderDetail,
 } from "../types/remittance.types";
 
-// Toggle for mock/production
+// Toggle for mock data - set to false when backend is ready
 const USE_MOCK_DATA = true;
 
 export const remittanceService = {
-  // Compare all remittance options
-  compareRemittance: async (
-    fromCurrency: string = "USD",
-    amount: number = 1000,
-    toCurrency: string = "ETB",
-  ): Promise<RemittanceComparison> => {
+  // GET /api/v1/remittance/rates
+  fetchRates: async (): Promise<RatesResponse> => {
     if (USE_MOCK_DATA) {
       await new Promise((resolve) => setTimeout(resolve, 800));
-      return {
-        ...mockRemittanceComparison,
-        fromCurrency,
-        toCurrency,
-        sendAmount: amount,
-      };
+      return mockRatesResponse;
     }
-
     try {
-      const response = await api.get("/api/v1/remittance/compare", {
-        params: { from: fromCurrency, amount, to: toCurrency },
-      });
+      const response = await api.get("/api/v1/remittance/rates");
       return response.data;
     } catch (error) {
-      console.error("API failed, using mock data:", error);
-      return {
-        ...mockRemittanceComparison,
-        fromCurrency,
-        toCurrency,
-        sendAmount: amount,
-      };
-    }
-  },
-
-  // Get all providers
-  getProviders: async (): Promise<RemittanceProvider[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return mockProviders;
-    }
-
-    try {
-      const response = await api.get("/api/v1/remittance/providers");
-      return response.data;
-    } catch (error) {
-      console.error("API failed, using mock data:", error);
-      return mockProviders;
-    }
-  },
-
-  // Get provider by ID
-  getProviderById: async (
-    providerId: string,
-  ): Promise<RemittanceProvider | null> => {
-    if (USE_MOCK_DATA) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return mockProviders.find((p) => p.id === providerId) || null;
-    }
-
-    try {
-      const response = await api.get(
-        `/api/v1/remittance/providers/${providerId}`,
-      );
-      return response.data;
-    } catch (error) {
-      console.error("API failed, using mock data:", error);
-      return mockProviders.find((p) => p.id === providerId) || null;
-    }
-  },
-
-  // Get provider rates
-  getProviderRates: async (providerId: string): Promise<ProviderRate[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      return mockProviderRates.filter((r) => r.providerId === providerId);
-    }
-
-    try {
-      const response = await api.get(
-        `/api/v1/remittance/providers/${providerId}/rates`,
-      );
-      return response.data;
-    } catch (error) {
-      console.error("API failed, using mock data:", error);
-      return mockProviderRates.filter((r) => r.providerId === providerId);
-    }
-  },
-
-  // Get delivery methods
-  getDeliveryMethods: async (): Promise<DeliveryMethod[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return mockDeliveryMethods;
-    }
-
-    try {
-      const response = await api.get("/api/v1/remittance/delivery-methods");
-      return response.data;
-    } catch (error) {
-      console.error("API failed, using mock data:", error);
-      return mockDeliveryMethods;
-    }
-  },
-
-  // Calculate transfer
-  calculateTransfer: async (
-    fromCurrency: string,
-    toCurrency: string,
-    amount: number,
-    providerId: string,
-  ): Promise<any> => {
-    if (USE_MOCK_DATA) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const provider = mockProviders.find((p) => p.id === providerId);
-      const rate = provider?.rates?.find((r) => r.currency === toCurrency);
-
-      return {
-        fromAmount: amount,
-        toAmount: amount * (rate?.rate || 55.5),
-        rate: rate?.rate || 55.5,
-        fee: 4.99,
-        total: amount - 4.99,
-        providerId,
-        providerName: provider?.name,
-      };
-    }
-
-    try {
-      const response = await api.post("/api/v1/remittance/calculate", {
-        fromCurrency,
-        toCurrency,
-        amount,
-        providerId,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Calculation failed:", error);
+      console.error("Error fetching rates:", error);
       throw error;
     }
   },
 
-  // Seed data (admin only)
-  seedRemittanceData: async (): Promise<any> => {
+  // GET /api/v1/remittance/compare?from=USD&amount=1000
+  fetchCompare: async (
+    fromCurrency: string,
+    amount: number,
+  ): Promise<CompareResponse> => {
     if (USE_MOCK_DATA) {
-      return { message: "Mock data seeded successfully" };
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      return mockCompareResponse(fromCurrency, amount);
     }
-
     try {
-      const response = await api.get("/api/v1/remittance/seed");
+      const response = await api.get("/api/v1/remittance/compare", {
+        params: { from: fromCurrency, amount },
+      });
       return response.data;
     } catch (error) {
-      console.error("Failed to seed data:", error);
+      console.error("Error fetching comparison:", error);
+      throw error;
+    }
+  },
+
+  // GET /api/v1/remittance/providers
+  fetchAllProviders: async (): Promise<ProviderBasic[]> => {
+    if (USE_MOCK_DATA) {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      return mockProvidersResponse;
+    }
+    try {
+      const response = await api.get("/api/v1/remittance/providers");
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching providers:", error);
+      throw error;
+    }
+  },
+
+  // GET /api/v1/remittance/providers/:provider
+  fetchProviderByName: async (provider: string): Promise<ProviderDetail[]> => {
+    if (USE_MOCK_DATA) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return mockProviderDetailsResponse[provider] || [];
+    }
+    try {
+      const response = await api.get(
+        `/api/v1/remittance/providers/${provider}`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching provider:", error);
       throw error;
     }
   },
