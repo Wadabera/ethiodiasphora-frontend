@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import type { KYCState } from "../types/kycTypes";
+import  type{ KYCState } from "../types/kycTypes";
 // import type { KYCStatusResponse } from "../types/kyctypes";
 import type { KYCFormSubmission } from "../types/kycTypes";
 import { kycService } from "../service/kycService";

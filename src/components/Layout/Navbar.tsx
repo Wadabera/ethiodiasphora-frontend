@@ -25,7 +25,7 @@ export default function Navbar() {
         </Link>
 
         {/* Invest Now - Goes to Investment Opportunities */}
-        <Link to="/invest">
+        <Link to="/Invest-now">
           <button className="bg-[#1A1A1A] text-[#FFD700] font-semibold py-2 px-6 rounded-lg transition-all duration-300 hover:bg-[#FFD700] hover:text-[#000000]">
             Invest now
           </button>

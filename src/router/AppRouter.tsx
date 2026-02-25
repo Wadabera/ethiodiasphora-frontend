@@ -55,6 +55,7 @@ import CreateIvestmentPage from "@/BusinessOwnerFeatures/MyInvestment/pages/Crea
 import MarketExchangePage from "@/pages/MarketExchangePage";
 import RemittanceLandingPage from "@/pages/RemittanceLandingPage";
 import CurrencyPageWrapper from "@/pages/CurrencyPageWrapper";
+import InvestPage from "@/pages/InvestPage";
 // import InvestPage from "@/pages/InvestPage";
 
 const AppRouter = () => {
@@ -69,6 +70,7 @@ const AppRouter = () => {
         <Route path="/market-exchange" element={<MarketExchangePage />} />
         <Route path="/currency" element={<CurrencyPageWrapper />} />
         <Route path="/send-money" element={<RemittanceLandingPage />} />
+        <Route path="/Invest-now" element={<InvestPage />} />
       
         {/* ===== DASHBOARD REDIRECT ===== */}
         <Route

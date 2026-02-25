@@ -16,7 +16,7 @@ import {
   MapPin,
   Globe,
   Calendar,
-  Send,
+  // Send,
   MessageSquare,
   Users,
   Briefcase,
