@@ -7,7 +7,7 @@ import adminInvestmentsReducer from "../AdminFeatures/InvestmentApproved/slice/A
 import adminCompanyReducer from "../AdminFeatures/RegisteredCompanyApproved/slice/AdminCompanySlice";
 import investorIPOReducer from "../InvestorFearutes/IPOInvesting/slice/investorIPOSlice";
 import publishedReducer from "../InvestorFearutes/Investment/slices/PublishedInvestmentSlice";
-import kycReducer from "../features/kyc/slices/kycSlice";
+import kycReducer from "../features/kyc/slices/BusinessKYCSlice";
 // Create and export the store directly
 import adminKycReducer from "../features/kyc/slices/adminKycSlice";
 import businessIPOReducer from "../BusinessOwnerFeatures/IPOManagement/slice/businessIPOSlice"; 

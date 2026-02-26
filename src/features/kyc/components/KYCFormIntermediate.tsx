@@ -1,12 +1,6 @@
+// src/features/kyc/components/KYCFormIntermediate.tsx
 import React, { useState } from "react";
-import {
-  // Upload,
-  FileText,
-  IdCard,
-  Briefcase,
-  DollarSign,
-  // Camera,
-} from "lucide-react";
+import { FileText, IdCard, Briefcase, DollarSign } from "lucide-react";
 import { DocumentUploader } from "./DocumentUploader";
 
 interface KYCFormIntermediateProps {
@@ -20,7 +14,6 @@ export const KYCFormIntermediate: React.FC<KYCFormIntermediateProps> = ({
   onSubmit,
   loading,
   initialData = {},
-  // errors = {},
 }) => {
   const [formData, setFormData] = useState({
     idDocumentType: initialData.idDocumentType || "passport",
@@ -30,7 +23,7 @@ export const KYCFormIntermediate: React.FC<KYCFormIntermediateProps> = ({
     selfieImage: initialData.selfieImage || null,
     employmentStatus: initialData.employmentStatus || "",
     occupation: initialData.occupation || "",
-    annualIncome: initialData.annualIncome || "",
+    annualIncome: initialData.annualIncome || "", // Keep as string for input
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -68,8 +61,16 @@ export const KYCFormIntermediate: React.FC<KYCFormIntermediateProps> = ({
       errors.employmentStatus = "Employment status is required";
     if (!formData.occupation.trim())
       errors.occupation = "Occupation is required";
-    if (!formData.annualIncome)
+
+    // ✅ Validate annualIncome is a valid number
+    if (!formData.annualIncome) {
       errors.annualIncome = "Annual income is required";
+    } else if (
+      isNaN(Number(formData.annualIncome)) ||
+      Number(formData.annualIncome) <= 0
+    ) {
+      errors.annualIncome = "Annual income must be a positive number";
+    }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -83,7 +84,13 @@ export const KYCFormIntermediate: React.FC<KYCFormIntermediateProps> = ({
     }
 
     try {
-      await onSubmit(formData);
+      // ✅ Convert annualIncome to number before submitting
+      const submitData = {
+        ...formData,
+        annualIncome: Number(formData.annualIncome), // Convert to number!
+      };
+
+      await onSubmit(submitData);
     } catch (err) {
       // Error handled in parent
     }
@@ -91,6 +98,7 @@ export const KYCFormIntermediate: React.FC<KYCFormIntermediateProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Rest of your JSX remains exactly the same */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-white mb-2">
           Identity Verification

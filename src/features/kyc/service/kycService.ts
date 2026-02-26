@@ -1,14 +1,18 @@
-// service/kycService.ts
-import api from "@/services/api";
-import type { KYCResponse, KYCStatusResponse } from "../types/kycTypes";
+// ============================================
+// KYC SERVICE - Complete API Integration
+// ============================================
 
-// Helper function to get token
+import api from "@/services/api";
+import type {
+  KYCResponse,
+  KYCStatusResponse,
+  KYCSubmissionRequest,
+  FileUploadResponse,
+} from "../types/kycTypes";
+
 const getToken = (): string => {
-  const token =
-    localStorage.getItem("access_token");
-    
+  const token = localStorage.getItem("access_token");
   if (!token) {
-    console.error("No authentication token found in storage");
     throw new Error("Please login to access this feature");
   }
   return token;
@@ -17,45 +21,32 @@ const getToken = (): string => {
 export const kycService = {
   // ========== USER KYC FUNCTIONS ==========
 
-  // Submit KYC (all levels)
-  async submitKYC(level: string, data: any): Promise<KYCResponse> {
+  // Submit KYC by level (basic/intermediate/advanced)
+  async submitKYC(data: KYCSubmissionRequest): Promise<KYCResponse> {
     const token = getToken();
-
-    const response = await api.post(
-      `/api/v1/kyc/submit`,
-      {
-        level,
-        ...data,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    return response.data;
-  },
-
-  // Get KYC status
-  async getKYCStatus(): Promise<KYCStatusResponse> {
-    const token = getToken();
-
-    const response = await api.get(`/api/v1/kyc/status`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const response = await api.post(`/api/v1/kyc/submit`, data, {
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   },
 
-  // Upload document/file
-  async uploadDocument(file: File, type: string): Promise<{ url: string }> {
+  // Get user's KYC status
+  async getKYCStatus(): Promise<KYCStatusResponse> {
+    const token = getToken();
+    const response = await api.get(`/api/v1/kyc/status`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  },
+
+  // Upload document file
+  async uploadDocument(file: File, type: string): Promise<FileUploadResponse> {
     const token = getToken();
     const formData = new FormData();
     formData.append("file", file);
     formData.append("type", type);
 
-    const response = await api.post(`/api/v1/upload`, formData, {
+    const response = await api.post(`/api/v1/submit`, formData, {//I hadnt this endpoints in the backend but i added it to upload files and get back the url
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data",
@@ -66,100 +57,84 @@ export const kycService = {
 
   // ========== ADMIN KYC FUNCTIONS ==========
 
-  // Admin: Get all KYC submissions
-  async getAllSubmissions(
-    filters = {},
-  ): Promise<{ submissions: KYCResponse[]; pagination?: any }> {
-    const token = getToken();
-
-    const response = await api.get(`/api/v1/kyc/admin/all`, {
-      params: filters,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  },
-
-  // Admin: Get pending submissions
-  async getPendingSubmissions(): Promise<{
-    submissions: KYCResponse[];
-    total: number;
+  // Get all KYC submissions (with filters)
+  async getAllSubmissions(filters?: any): Promise<{
+    kycs: KYCResponse[];
+    pagination?: any;
   }> {
     const token = getToken();
-
-    const response = await api.get(`/api/v1/kyc/admin/pending`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const response = await api.get(`/api/v1/kyc/admin/all`, {
+      params: filters,
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   },
 
-  // Admin: Get submission details
+  // Get pending submissions
+  async getPendingSubmissions(): Promise<{ submissions: KYCResponse[] }> {
+    const token = getToken();
+    const response = await api.get(`/api/v1/kyc/admin/pending`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  },
+
+  // Get single submission details
   async getSubmissionDetails(kycId: string): Promise<KYCResponse> {
     const token = getToken();
-
     const response = await api.get(`/api/v1/kyc/admin/${kycId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   },
 
-  // Admin: Approve KYC
+  // Approve KYC
   async approveKYC(kycId: string, notes: string): Promise<KYCResponse> {
     const token = getToken();
-
     const response = await api.put(
       `/api/v1/kyc/admin/${kycId}/approve`,
-      { notes },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      { notes, sendNotifications: true },
+      { headers: { Authorization: `Bearer ${token}` } },
     );
     return response.data;
   },
 
-  // Admin: Reject KYC
+  // Reject KYC
   async rejectKYC(
     kycId: string,
     reason: string,
     notes: string,
   ): Promise<KYCResponse> {
     const token = getToken();
-
     const response = await api.put(
       `/api/v1/kyc/admin/${kycId}/reject`,
-      { reason, notes },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      { reason, notes, sendNotifications: true },
+      { headers: { Authorization: `Bearer ${token}` } },
     );
     return response.data;
   },
 
-  // Admin: Request more information
+  // Request more information
   async requestMoreInfo(kycId: string, message: string): Promise<KYCResponse> {
     const token = getToken();
-
     const response = await api.put(
       `/api/v1/kyc/admin/${kycId}/request-info`,
-      { message },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      { message, sendNotifications: true },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return response.data;
+  },
+
+  // Send to review
+  async sendToReview(kycId: string, notes: string): Promise<KYCResponse> {
+    const token = getToken();
+    const response = await api.put(
+      `/api/v1/kyc/admin/${kycId}/review`,
+      { notes },
+      { headers: { Authorization: `Bearer ${token}` } },
     );
     return response.data;
   },
 };
 
-// Export for backward compatibility
 export const adminKycService = kycService;

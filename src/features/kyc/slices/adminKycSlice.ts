@@ -1,27 +1,11 @@
-// slices/adminKycSlice.ts
+// ============================================
+// ADMIN KYC SLICE - Admin State Management
+// ============================================
+
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import type { KYCSubmissionRecord, AdminSubmission } from "../types/kycTypes";
+import type { AdminKYCState,  } from "../types/kycTypes";
 import { adminKycService } from "../service/kycService";
 import type { RootState } from "@/store/store";
-
-interface AdminKYCState {
-  submissions: KYCSubmissionRecord[];
-  selectedSubmission: KYCSubmissionRecord | null;
-  loading: boolean;
-  error: string | null;
-  filters: {
-    status: string;
-    level: string;
-    page: number;
-    limit: number;
-  };
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  } | null;
-}
 
 const initialState: AdminKYCState = {
   submissions: [],
@@ -31,6 +15,8 @@ const initialState: AdminKYCState = {
   filters: {
     status: "all",
     level: "all",
+    userType: "all",
+    search: "",
     page: 1,
     limit: 20,
   },
@@ -40,15 +26,11 @@ const initialState: AdminKYCState = {
 // Async Thunks
 export const fetchAdminSubmissions = createAsyncThunk(
   "adminKyc/fetchSubmissions",
-  async (
-    { token, filters }: { token: string; filters?: any },
-    { rejectWithValue },
-  ) => {
+  async (filters: any, { rejectWithValue }) => {
     try {
-      const response = await adminKycService.getAllSubmissions(token, filters);
-      return response.data;
+      const response = await adminKycService.getAllSubmissions(filters);
+      return response;
     } catch (error: any) {
-      console.error("Fetch submissions error:", error.response?.data);
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch submissions",
       );
@@ -56,34 +38,15 @@ export const fetchAdminSubmissions = createAsyncThunk(
   },
 );
 
-export const fetchPendingSubmissions = createAsyncThunk(
-  "adminKyc/fetchPending",
-  async (token: string, { rejectWithValue }) => {
-    try {
-      const response = await adminKycService.getPendingSubmissions(token);
-      return response.data;
-    } catch (error: any) {
-      console.error("Fetch pending error:", error.response?.data);
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch pending submissions",
-      );
-    }
-  },
-);
-
 export const fetchSubmissionDetails = createAsyncThunk(
   "adminKyc/fetchDetails",
-  async (
-    { kycId, token }: { kycId: string; token: string },
-    { rejectWithValue },
-  ) => {
+  async (kycId: string, { rejectWithValue }) => {
     try {
-      const response = await adminKycService.getSubmissionDetails(kycId, token);
-      return response.data;
+      const response = await adminKycService.getSubmissionDetails(kycId);
+      return response;
     } catch (error: any) {
-      console.error("Fetch details error:", error.response?.data);
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch submission details",
+        error.response?.data?.message || "Failed to fetch details",
       );
     }
   },
@@ -92,16 +55,15 @@ export const fetchSubmissionDetails = createAsyncThunk(
 export const approveSubmission = createAsyncThunk(
   "adminKyc/approve",
   async (
-    { kycId, notes, token }: { kycId: string; notes: string; token: string },
+    { kycId, notes }: { kycId: string; notes: string },
     { rejectWithValue },
   ) => {
     try {
-      const response = await adminKycService.approveKYC(kycId, notes, token);
-      return { kycId, ...response.data };
+      const response = await adminKycService.approveKYC(kycId, notes);
+      return { kycId, ...response };
     } catch (error: any) {
-      console.error("Approve error:", error.response?.data);
       return rejectWithValue(
-        error.response?.data?.message || "Failed to approve submission",
+        error.response?.data?.message || "Failed to approve",
       );
     }
   },
@@ -110,26 +72,15 @@ export const approveSubmission = createAsyncThunk(
 export const rejectSubmission = createAsyncThunk(
   "adminKyc/reject",
   async (
-    {
-      kycId,
-      reason,
-      notes,
-      token,
-    }: { kycId: string; reason: string; notes: string; token: string },
+    { kycId, reason, notes }: { kycId: string; reason: string; notes: string },
     { rejectWithValue },
   ) => {
     try {
-      const response = await adminKycService.rejectKYC(
-        kycId,
-        reason,
-        notes,
-        token,
-      );
-      return { kycId, ...response.data };
+      const response = await adminKycService.rejectKYC(kycId, reason, notes);
+      return { kycId, ...response };
     } catch (error: any) {
-      console.error("Reject error:", error.response?.data);
       return rejectWithValue(
-        error.response?.data?.message || "Failed to reject submission",
+        error.response?.data?.message || "Failed to reject",
       );
     }
   },
@@ -138,24 +89,32 @@ export const rejectSubmission = createAsyncThunk(
 export const requestMoreInfo = createAsyncThunk(
   "adminKyc/requestInfo",
   async (
-    {
-      kycId,
-      message,
-      token,
-    }: { kycId: string; message: string; token: string },
+    { kycId, message }: { kycId: string; message: string },
     { rejectWithValue },
   ) => {
     try {
-      const response = await adminKycService.requestMoreInfo(
-        kycId,
-        message,
-        token,
-      );
-      return { kycId, ...response.data };
+      const response = await adminKycService.requestMoreInfo(kycId, message);
+      return { kycId, ...response };
     } catch (error: any) {
-      console.error("Request info error:", error.response?.data);
       return rejectWithValue(
-        error.response?.data?.message || "Failed to request more information",
+        error.response?.data?.message || "Failed to request info",
+      );
+    }
+  },
+);
+
+export const sendToReview = createAsyncThunk(
+  "adminKyc/sendToReview",
+  async (
+    { kycId, notes }: { kycId: string; notes: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const response = await adminKycService.sendToReview(kycId, notes);
+      return { kycId, ...response };
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to send to review",
       );
     }
   },
@@ -183,6 +142,36 @@ const adminKycSlice = createSlice({
       state.error = null;
       state.pagination = null;
     },
+    updateSubmissionStatus: (state, action) => {
+      const { kycId, status, notes, rejectionReason } = action.payload;
+
+      // Update in submissions list
+      state.submissions = state.submissions.map((sub) =>
+        sub._id === kycId
+          ? {
+              ...sub,
+              status,
+              reviewNotes: notes || sub.reviewNotes,
+              rejectionReason: rejectionReason || sub.rejectionReason,
+              reviewedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }
+          : sub,
+      );
+
+      // Update selected submission if it's the same
+      if (state.selectedSubmission && state.selectedSubmission._id === kycId) {
+        state.selectedSubmission = {
+          ...state.selectedSubmission,
+          status,
+          reviewNotes: notes || state.selectedSubmission.reviewNotes,
+          rejectionReason:
+            rejectionReason || state.selectedSubmission.rejectionReason,
+          reviewedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -193,26 +182,14 @@ const adminKycSlice = createSlice({
       })
       .addCase(fetchAdminSubmissions.fulfilled, (state, action) => {
         state.loading = false;
-        state.submissions = action.payload.submissions || [];
+        state.submissions = action.payload.kycs || [];
         state.pagination = action.payload.pagination || null;
       })
       .addCase(fetchAdminSubmissions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
-      // Fetch pending submissions
-      .addCase(fetchPendingSubmissions.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchPendingSubmissions.fulfilled, (state, action) => {
-        state.loading = false;
-        state.submissions = action.payload.submissions || [];
-      })
-      .addCase(fetchPendingSubmissions.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
+
       // Fetch submission details
       .addCase(fetchSubmissionDetails.pending, (state) => {
         state.loading = true;
@@ -226,6 +203,7 @@ const adminKycSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+
       // Approve submission
       .addCase(approveSubmission.fulfilled, (state, action) => {
         const { kycId } = action.payload;
@@ -239,6 +217,7 @@ const adminKycSlice = createSlice({
           };
         }
       })
+
       // Reject submission
       .addCase(rejectSubmission.fulfilled, (state, action) => {
         const { kycId } = action.payload;
@@ -252,6 +231,7 @@ const adminKycSlice = createSlice({
           };
         }
       })
+
       // Request more info
       .addCase(requestMoreInfo.fulfilled, (state, action) => {
         const { kycId } = action.payload;
@@ -264,6 +244,20 @@ const adminKycSlice = createSlice({
             status: "requires_update",
           };
         }
+      })
+
+      // Send to review
+      .addCase(sendToReview.fulfilled, (state, action) => {
+        const { kycId } = action.payload;
+        state.submissions = state.submissions.map((sub) =>
+          sub._id === kycId ? { ...sub, status: "under_review" } : sub,
+        );
+        if (state.selectedSubmission?._id === kycId) {
+          state.selectedSubmission = {
+            ...state.selectedSubmission,
+            status: "under_review",
+          };
+        }
       });
   },
 });
@@ -274,7 +268,9 @@ export const {
   clearSelectedSubmission,
   clearError,
   resetAdminKYC,
+  updateSubmissionStatus,
 } = adminKycSlice.actions;
+
 export default adminKycSlice.reducer;
 
 // Selectors

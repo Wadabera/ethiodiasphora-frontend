@@ -1,140 +1,240 @@
 // ============================================
-// KYC SERVICE - Complete API Integration
+// KYC TYPES - Complete Type Definitions
 // ============================================
 
-import api from "@/services/api";
-import type {
-  KYCResponse,
-  KYCStatusResponse,
-  KYCSubmissionRequest,
-  FileUploadResponse,
-} from "../types/kycTypes";
+export type KYCStatus =
+  | "pending"
+  | "under_review"
+  | "approved"
+  | "rejected"
+  | "requires_update";
 
-const getToken = (): string => {
-  const token = localStorage.getItem("access_token");
-  if (!token) {
-    throw new Error("Please login to access this feature");
-  }
-  return token;
-};
+export type KYCLevel = "basic" | "intermediate" | "advanced";
+export type UserRole = "diaspora_investor" | "local_business" | "admin";
+export type UserType = "investor" | "business";
 
-export const kycService = {
-  // ========== USER KYC FUNCTIONS ==========
+export type IDDocumentType = "passport" | "national_id" | "drivers_license";
 
-  // Submit KYC by level (basic/intermediate/advanced)
-  async submitKYC(data: KYCSubmissionRequest): Promise<KYCResponse> {
-    const token = getToken();
-    const response = await api.post(`/api/v1/kyc/submit`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  },
+export type EmploymentStatus =
+  | "employed"
+  | "self_employed"
+  | "unemployed"
+  | "student"
+  | "retired";
 
-  // Get user's KYC status
-  async getKYCStatus(): Promise<KYCStatusResponse> {
-    const token = getToken();
-    const response = await api.get(`/api/v1/kyc/status`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  },
+export type SourceOfFunds =
+  | "employment_salary"
+  | "business_income"
+  | "investments"
+  | "inheritance"
+  | "savings";
 
-  // Upload document file
-  async uploadDocument(file: File, type: string): Promise<FileUploadResponse> {
-    const token = getToken();
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("type", type);
+// ============================================
+// User Interface
+// ============================================
+export interface KYCUser {
+  _id: string;
+  email: string;
+  fullName: string;
+  phoneNumber?: string;
+  role: UserRole;
+  kycStatus?: KYCStatus;
+  kycLevel?: KYCLevel;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
-    const response = await api.post(`/api/v1/upload`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    return response.data;
-  },
+// ============================================
+// KYC Data Interfaces by Level
+// ============================================
 
-  // ========== ADMIN KYC FUNCTIONS ==========
+// Level 1: Basic KYC
+export interface BasicKYCData {
+  fullName: string;
+  dateOfBirth: string;
+  nationality: string;
+  address: string;
+  city: string;
+  country: string;
+  postalCode?: string;
+}
 
-  // Get all KYC submissions (with filters)
-  async getAllSubmissions(filters?: any): Promise<{
-    kycs: KYCResponse[];
-    pagination?: any;
-  }> {
-    const token = getToken();
-    const response = await api.get(`/api/v1/kyc/admin/all`, {
-      params: filters,
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  },
+// Level 2: Intermediate KYC
+export interface IntermediateKYCData {
+  idDocumentType: IDDocumentType;
+  idDocumentNumber: string;
+  idDocumentFrontImage: string | File;
+  idDocumentBackImage?: string | File;
+  selfieImage: string | File;
+  employmentStatus: EmploymentStatus;
+  occupation: string;
+  annualIncome: number;
+}
 
-  // Get pending submissions
-  async getPendingSubmissions(): Promise<{ submissions: KYCResponse[] }> {
-    const token = getToken();
-    const response = await api.get(`/api/v1/kyc/admin/pending`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  },
+// Level 3: Advanced KYC
+export interface AdvancedKYCData {
+  sourceOfFunds: SourceOfFunds;
+  bankStatement: string | File;
+  proofOfAddress: string | File;
+  taxIdentificationNumber?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  employmentLetter?: string | File;
+}
 
-  // Get single submission details
-  async getSubmissionDetails(kycId: string): Promise<KYCResponse> {
-    const token = getToken();
-    const response = await api.get(`/api/v1/kyc/admin/${kycId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  },
+// ============================================
+// KYC Submission Request
+// ============================================
+export interface KYCSubmissionRequest {
+  level: KYCLevel; // ✅ This is required and matches backend
+  // Basic fields
+  fullName?: string;
+  dateOfBirth?: string;
+  nationality?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  postalCode?: string;
+  // Intermediate fields
+  idDocumentType?: string;
+  idDocumentNumber?: string;
+  idDocumentFrontImage?: string | File; // ✅ Allow File for form data
+  idDocumentBackImage?: string | File;
+  selfieImage?: string | File;
+  employmentStatus?: string;
+  occupation?: string;
+  annualIncome?: number;
+  // Advanced fields
+  sourceOfFunds?: string;
+  bankStatement?: string | File;
+  proofOfAddress?: string | File;
+  taxIdentificationNumber?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  employmentLetter?: string | File;
+}
 
-  // Approve KYC
-  async approveKYC(kycId: string, notes: string): Promise<KYCResponse> {
-    const token = getToken();
-    const response = await api.put(
-      `/api/v1/kyc/admin/${kycId}/approve`,
-      { notes, sendNotifications: true },
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    return response.data;
-  },
+// ============================================
+// KYC Response from API
+// ============================================
+export interface KYCResponse {
+  _id: string;
+  userId: string | KYCUser;
+  level: KYCLevel; // ✅ This matches backend
+  status: KYCStatus;
+  // Basic fields
+  fullName?: string;
+  dateOfBirth?: string;
+  nationality?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  postalCode?: string;
+  // Intermediate fields
+  idDocumentType?: string;
+  idDocumentNumber?: string;
+  idDocumentFrontImage?: string; // ✅ URL string from backend
+  idDocumentBackImage?: string;
+  selfieImage?: string;
+  employmentStatus?: string;
+  occupation?: string;
+  annualIncome?: number;
+  // Advanced fields
+  sourceOfFunds?: string;
+  bankStatement?: string;
+  proofOfAddress?: string;
+  employmentLetter?: string;
+  taxIdentificationNumber?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  // Admin fields
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewNotes?: string;
+  rejectionReason?: string;
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+}
 
-  // Reject KYC
-  async rejectKYC(
-    kycId: string,
-    reason: string,
-    notes: string,
-  ): Promise<KYCResponse> {
-    const token = getToken();
-    const response = await api.put(
-      `/api/v1/kyc/admin/${kycId}/reject`,
-      { reason, notes, sendNotifications: true },
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    return response.data;
-  },
+// ============================================
+// KYC Status Response
+// ============================================
+export interface KYCStatusResponse {
+  overall: KYCStatus;
+  byLevel: {
+    basic: KYCStatus;
+    intermediate: KYCStatus;
+    advanced: KYCStatus;
+  };
+  records: Array<{
+    _id: string;
+    level: KYCLevel; // ✅ This matches backend
+    status: KYCStatus;
+    reviewedAt?: string;
+    reviewNotes?: string;
+    rejectionReason?: string;
+    createdAt: string;
+  }>;
+}
 
-  // Request more information
-  async requestMoreInfo(kycId: string, message: string): Promise<KYCResponse> {
-    const token = getToken();
-    const response = await api.put(
-      `/api/v1/kyc/admin/${kycId}/request-info`,
-      { message, sendNotifications: true },
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    return response.data;
-  },
+// ============================================
+// Redux State Interfaces
+// ============================================
+export interface KYCState {
+  loading: boolean;
+  error: string | null;
+  kycStatus: KYCStatusResponse | null;
+  currentLevel: KYCLevel;
+  submissions: KYCResponse[];
+}
 
-  // Send to review
-  async sendToReview(kycId: string, notes: string): Promise<KYCResponse> {
-    const token = getToken();
-    const response = await api.put(
-      `/api/v1/kyc/admin/${kycId}/review`,
-      { notes },
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    return response.data;
-  },
-};
+export interface AdminKYCState {
+  submissions: KYCResponse[];
+  selectedSubmission: KYCResponse | null;
+  loading: boolean;
+  error: string | null;
+  filters: {
+    status: string;
+    level: string;
+    userType: string;
+    search: string;
+    page: number;
+    limit: number;
+  };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  } | null;
+}
 
-export const adminKycService = kycService;
+// ============================================
+// Admin Action Types
+// ============================================
+export interface KYCApprovalRequest {
+  notes?: string;
+}
+
+export interface KYCRejectionRequest {
+  reason: string;
+  notes?: string;
+}
+
+export interface KYCRequestInfoRequest {
+  message: string;
+}
+
+// ============================================
+// File Upload
+// ============================================
+export interface FileUploadResponse {
+  url: string;
+  fileName: string;
+  fileType: string;
+  size: number;
+}

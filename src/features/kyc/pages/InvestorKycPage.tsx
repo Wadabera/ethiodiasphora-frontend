@@ -1,3 +1,4 @@
+// src/features/kyc/pages/InvestorKycPage.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,7 +19,9 @@ import { KYCFormIntermediate } from "@/features/kyc/components/KYCFormIntermedia
 import { KYCFormAdvanced } from "@/features/kyc/components/KYCFormAdvanced";
 import { KYCProgressStepper } from "@/features/kyc/components/KYCProgressStepper";
 import type {
- 
+  BasicKYCData,
+  IntermediateKYCData,
+  AdvancedKYCData,
 } from "../types/kycTypes";
 
 interface KYCStatus {
@@ -77,15 +80,26 @@ export default function InvestorKycPage() {
     }
   };
 
-  // Handle Basic KYC submission
+  // ============================================
+  // Helper: Convert File to Base64
+  // ============================================
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // ============================================
+  // Handle Basic KYC submission (no files - JSON)
+  // ============================================
   const handleBasicSubmit = async (data: BasicKYCData) => {
     try {
       setSubmitting(true);
       setError(null);
 
-      console.log("Submitting Basic KYC data:", data);
-
-      // According to API docs, Basic KYC requires these fields
       const requestData = {
         level: "basic",
         fullName: data.fullName,
@@ -97,7 +111,7 @@ export default function InvestorKycPage() {
         postalCode: data.postalCode || "",
       };
 
-      console.log("Sending Basic KYC request:", requestData);
+      console.log("📤 Submitting Basic KYC:", requestData);
 
       const response = await api.post("/api/v1/kyc/submit", requestData, {
         headers: {
@@ -105,70 +119,92 @@ export default function InvestorKycPage() {
         },
       });
 
-      console.log("Basic KYC response:", response.data);
+      console.log("✅ Basic KYC response:", response.data);
 
-      // Refresh status to show as pending
       await fetchKYCStatus();
-
-      // Show success message
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
 
-      // Auto-select next level
       if (kycStatus?.byLevel.intermediate !== "approved") {
         setCurrentLevel("intermediate");
       }
     } catch (err: any) {
-      console.error("Basic KYC submission error:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        config: err.config,
-      });
+      console.error(
+        "❌ Basic KYC submission error:",
+        err.response?.data || err,
+      );
       setError(err.response?.data?.message || "Failed to submit Basic KYC");
     } finally {
       setSubmitting(false);
     }
   };
 
+  // ============================================
   // Handle Intermediate KYC submission
+  // ✅ FIXED: Convert files to Base64 and send as JSON
+  // ============================================
   const handleIntermediateSubmit = async (data: IntermediateKYCData) => {
     try {
       setSubmitting(true);
       setError(null);
 
-      console.log("Submitting Intermediate KYC data:", data);
+      console.log("📝 Processing Intermediate KYC files...");
 
-      // First upload any files
-      const idDocumentFrontImageUrl =
-        data.idDocumentFrontImage instanceof File
-          ? await uploadFile(data.idDocumentFrontImage, "id_front")
-          : data.idDocumentFrontImage;
+      // Convert files to Base64
+      let idDocumentFrontImageBase64 = data.idDocumentFrontImage as string;
+      let idDocumentBackImageBase64 = data.idDocumentBackImage as
+        | string
+        | undefined;
+      let selfieImageBase64 = data.selfieImage as string;
 
-      const idDocumentBackImageUrl =
-        data.idDocumentBackImage instanceof File
-          ? await uploadFile(data.idDocumentBackImage, "id_back")
-          : data.idDocumentBackImage;
+      if (data.idDocumentFrontImage instanceof File) {
+        console.log("📎 Converting front image to Base64...");
+        idDocumentFrontImageBase64 = await fileToBase64(
+          data.idDocumentFrontImage,
+        );
+      }
 
-      const selfieImageUrl =
-        data.selfieImage instanceof File
-          ? await uploadFile(data.selfieImage, "selfie")
-          : data.selfieImage;
+      if (data.idDocumentBackImage instanceof File) {
+        console.log("📎 Converting back image to Base64...");
+        idDocumentBackImageBase64 = await fileToBase64(
+          data.idDocumentBackImage,
+        );
+      }
 
-      // Prepare request data
+      if (data.selfieImage instanceof File) {
+        console.log("📎 Converting selfie to Base64...");
+        selfieImageBase64 = await fileToBase64(data.selfieImage);
+      }
+
+      // Prepare request data - ensure annualIncome is a number
       const requestData = {
         level: "intermediate",
         idDocumentType: data.idDocumentType,
         idDocumentNumber: data.idDocumentNumber,
-        idDocumentFrontImage: idDocumentFrontImageUrl,
-        idDocumentBackImage: idDocumentBackImageUrl,
-        selfieImage: selfieImageUrl,
+        idDocumentFrontImage: idDocumentFrontImageBase64,
+        idDocumentBackImage: idDocumentBackImageBase64,
+        selfieImage: selfieImageBase64,
         employmentStatus: data.employmentStatus,
         occupation: data.occupation,
-        annualIncome: data.annualIncome,
+        annualIncome: Number(data.annualIncome), // ✅ Convert to number!
       };
 
-      console.log("Sending Intermediate KYC request:", requestData);
+      console.log("📤 Sending Intermediate KYC request:", {
+        ...requestData,
+        idDocumentFrontImage: requestData.idDocumentFrontImage
+          ? "Base64 string (length: " +
+            requestData.idDocumentFrontImage.length +
+            ")"
+          : null,
+        idDocumentBackImage: requestData.idDocumentBackImage
+          ? "Base64 string (length: " +
+            requestData.idDocumentBackImage.length +
+            ")"
+          : null,
+        selfieImage: requestData.selfieImage
+          ? "Base64 string (length: " + requestData.selfieImage.length + ")"
+          : null,
+      });
 
       const response = await api.post("/api/v1/kyc/submit", requestData, {
         headers: {
@@ -176,21 +212,20 @@ export default function InvestorKycPage() {
         },
       });
 
-      console.log("Intermediate KYC response:", response.data);
+      console.log("✅ Intermediate KYC response:", response.data);
 
-      // Refresh status
       await fetchKYCStatus();
-
-      // Show success
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
 
-      // Auto-select next level
       if (kycStatus?.byLevel.advanced !== "approved") {
         setCurrentLevel("advanced");
       }
     } catch (err: any) {
-      console.error("Intermediate KYC submission error:", err);
+      console.error(
+        "❌ Intermediate KYC submission error:",
+        err.response?.data || err,
+      );
       setError(
         err.response?.data?.message || "Failed to submit Intermediate KYC",
       );
@@ -199,43 +234,63 @@ export default function InvestorKycPage() {
     }
   };
 
+  // ============================================
   // Handle Advanced KYC submission
+  // ✅ FIXED: Convert files to Base64 and send as JSON
+  // ============================================
   const handleAdvancedSubmit = async (data: AdvancedKYCData) => {
     try {
       setSubmitting(true);
       setError(null);
 
-      console.log("Submitting Advanced KYC data:", data);
+      console.log("📝 Processing Advanced KYC files...");
 
-      // Upload files
-      const bankStatementUrl =
-        data.bankStatement instanceof File
-          ? await uploadFile(data.bankStatement, "bank_statement")
-          : data.bankStatement;
+      // Convert files to Base64
+      let bankStatementBase64 = data.bankStatement as string;
+      let proofOfAddressBase64 = data.proofOfAddress as string;
+      let employmentLetterBase64 = data.employmentLetter as string | undefined;
 
-      const proofOfAddressUrl =
-        data.proofOfAddress instanceof File
-          ? await uploadFile(data.proofOfAddress, "proof_of_address")
-          : data.proofOfAddress;
+      if (data.bankStatement instanceof File) {
+        console.log("📎 Converting bank statement to Base64...");
+        bankStatementBase64 = await fileToBase64(data.bankStatement);
+      }
 
-      const employmentLetterUrl =
-        data.employmentLetter instanceof File
-          ? await uploadFile(data.employmentLetter, "employment_letter")
-          : data.employmentLetter;
+      if (data.proofOfAddress instanceof File) {
+        console.log("📎 Converting proof of address to Base64...");
+        proofOfAddressBase64 = await fileToBase64(data.proofOfAddress);
+      }
+
+      if (data.employmentLetter instanceof File) {
+        console.log("📎 Converting employment letter to Base64...");
+        employmentLetterBase64 = await fileToBase64(data.employmentLetter);
+      }
 
       // Prepare request data
       const requestData = {
         level: "advanced",
         sourceOfFunds: data.sourceOfFunds,
-        bankStatement: bankStatementUrl,
-        proofOfAddress: proofOfAddressUrl,
-        employmentLetter: employmentLetterUrl,
+        bankStatement: bankStatementBase64,
+        proofOfAddress: proofOfAddressBase64,
+        employmentLetter: employmentLetterBase64,
         taxIdentificationNumber: data.taxIdentificationNumber || "",
         bankName: data.bankName || "",
         bankAccountNumber: data.bankAccountNumber || "",
       };
 
-      console.log("Sending Advanced KYC request:", requestData);
+      console.log("📤 Sending Advanced KYC request:", {
+        ...requestData,
+        bankStatement: requestData.bankStatement
+          ? "Base64 string (length: " + requestData.bankStatement.length + ")"
+          : null,
+        proofOfAddress: requestData.proofOfAddress
+          ? "Base64 string (length: " + requestData.proofOfAddress.length + ")"
+          : null,
+        employmentLetter: requestData.employmentLetter
+          ? "Base64 string (length: " +
+            requestData.employmentLetter.length +
+            ")"
+          : null,
+      });
 
       const response = await api.post("/api/v1/kyc/submit", requestData, {
         headers: {
@@ -243,45 +298,19 @@ export default function InvestorKycPage() {
         },
       });
 
-      console.log("Advanced KYC response:", response.data);
+      console.log("✅ Advanced KYC response:", response.data);
 
-      // Refresh status
       await fetchKYCStatus();
-
-      // Show success
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (err: any) {
-      console.error("Advanced KYC submission error:", err);
+      console.error(
+        "❌ Advanced KYC submission error:",
+        err.response?.data || err,
+      );
       setError(err.response?.data?.message || "Failed to submit Advanced KYC");
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  // Upload file helper function
-  const uploadFile = async (file: File, type: string): Promise<string> => {
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", type);
-
-      console.log(`Uploading ${type} file:`, file.name);
-
-      const response = await api.post("/api/v1/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      console.log(`File upload response for ${type}:`, response.data);
-
-      return response.data.url || response.data.location || response.data.path;
-    } catch (err: any) {
-      console.error(`File upload error for ${type}:`, err);
-      throw new Error(
-        `Failed to upload ${type}: ${err.response?.data?.message || err.message}`,
-      );
     }
   };
 
@@ -348,8 +377,8 @@ export default function InvestorKycPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black px-4 py-8">
       {/* Success Message */}
       {showSuccess && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl animate-slide-in">
+        <div className="fixed top-4 right-4 z-50 animate-slide-in">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl">
             <div className="flex items-center">
               <CheckCircle className="w-6 h-6 mr-3" />
               <div>
@@ -373,7 +402,7 @@ export default function InvestorKycPage() {
             </p>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="flex items-center text-sm">
+            <div className="flex items-center text-sm bg-gray-800 px-4 py-2 rounded-lg">
               <Globe className="w-4 h-4 mr-2 text-[#FFD700]" />
               <span className="text-gray-300">Diaspora Investor</span>
             </div>
@@ -450,243 +479,234 @@ export default function InvestorKycPage() {
         )}
 
         {/* Main Content */}
-        <div className="flex flex-col gap-8">
-          {/* Form Section */}
-          <div className="bg-[#0F0F0F] border border-gray-800 rounded-2xl p-8 shadow-2xl">
-            {currentLevel === "basic" && (
-              <div>
-                <div className="mb-8">
-                  <div className="flex items-center mb-4">
-                    <div className="p-3 bg-blue-500/20 rounded-xl mr-4">
-                      <FileText className="w-6 h-6 text-blue-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-white">
-                        Basic Information
-                      </h2>
-                      <p className="text-gray-400">
-                        Start with your personal details
-                      </p>
-                    </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Form Section - Takes 2/3 width */}
+          <div className="lg:col-span-2">
+            <div className="bg-[#0F0F0F] border border-gray-800 rounded-2xl p-8 shadow-2xl">
+              {/* Level Indicators */}
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-800">
+                <div className="flex items-center space-x-4">
+                  <div
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      currentLevel === "basic"
+                        ? "bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/30"
+                        : "bg-gray-800 text-gray-400"
+                    }`}
+                  >
+                    Basic
+                  </div>
+                  <div
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      currentLevel === "intermediate"
+                        ? "bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/30"
+                        : "bg-gray-800 text-gray-400"
+                    }`}
+                  >
+                    Intermediate
+                  </div>
+                  <div
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      currentLevel === "advanced"
+                        ? "bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/30"
+                        : "bg-gray-800 text-gray-400"
+                    }`}
+                  >
+                    Advanced
                   </div>
                 </div>
-                <KYCFormBasic
-                  onSubmit={handleBasicSubmit}
-                  loading={submitting}
-                />
-              </div>
-            )}
 
-            {currentLevel === "intermediate" && (
-              <div>
-                <div className="mb-8">
-                  <div className="flex items-center mb-4">
-                    <div className="p-3 bg-purple-500/20 rounded-xl mr-4">
-                      <Lock className="w-6 h-6 text-purple-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-white">
-                        Identity Verification
-                      </h2>
-                      <p className="text-gray-400">
-                        Verify your identity with documents
+                {kycStatus && (
+                  <div className="text-sm text-gray-400">
+                    Status:{" "}
+                    <span
+                      className={getStatusColor(
+                        kycStatus.byLevel[currentLevel],
+                      )}
+                    >
+                      {kycStatus.byLevel[currentLevel]
+                        .replace("_", " ")
+                        .toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Form Content */}
+              {currentLevel === "basic" && (
+                <div>
+                  <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <div className="flex items-center">
+                      <Globe className="w-5 h-5 text-blue-400 mr-3" />
+                      <p className="text-sm text-blue-300">
+                        Start with your personal information
                       </p>
                     </div>
                   </div>
+                  <KYCFormBasic
+                    onSubmit={handleBasicSubmit}
+                    loading={submitting}
+                  />
+                </div>
+              )}
+
+              {currentLevel === "intermediate" && (
+                <div>
                   {kycStatus?.byLevel.basic !== "approved" &&
-                    kycStatus?.byLevel.basic !== "pending" && (
-                      <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl mb-6">
-                        <div className="flex items-center">
-                          <AlertCircle className="w-5 h-5 text-yellow-400 mr-3" />
-                          <p className="text-yellow-300">
-                            You must complete Basic KYC before proceeding to
-                            Identity Verification
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                </div>
-                {(kycStatus?.byLevel.basic === "approved" ||
-                  kycStatus?.byLevel.basic === "pending") && (
-                  <KYCFormIntermediate
-                    onSubmit={handleIntermediateSubmit}
-                    loading={submitting}
-                  />
-                )}
-              </div>
-            )}
-
-            {currentLevel === "advanced" && (
-              <div>
-                <div className="mb-8">
-                  <div className="flex items-center mb-4">
-                    <div className="p-3 bg-[#FFD700]/20 rounded-xl mr-4">
-                      <TrendingUp className="w-6 h-6 text-[#FFD700]" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-white">
-                        Financial Verification
-                      </h2>
+                  kycStatus?.byLevel.basic !== "pending" ? (
+                    <div className="text-center py-12">
+                      <Lock className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-white mb-2">
+                        Level Locked
+                      </h3>
                       <p className="text-gray-400">
-                        Complete your financial profile
+                        You need to complete Basic KYC first
                       </p>
                     </div>
-                  </div>
-                  {kycStatus?.byLevel.intermediate !== "approved" &&
-                    kycStatus?.byLevel.intermediate !== "pending" && (
-                      <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl mb-6">
+                  ) : (
+                    <div>
+                      <div className="mb-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
                         <div className="flex items-center">
-                          <AlertCircle className="w-5 h-5 text-yellow-400 mr-3" />
-                          <p className="text-yellow-300">
-                            You must complete Identity Verification before
-                            proceeding to Financial Verification
+                          <Lock className="w-5 h-5 text-purple-400 mr-3" />
+                          <p className="text-sm text-purple-300">
+                            Verify your identity with documents
                           </p>
                         </div>
                       </div>
-                    )}
+                      <KYCFormIntermediate
+                        onSubmit={handleIntermediateSubmit}
+                        loading={submitting}
+                      />
+                    </div>
+                  )}
                 </div>
-                {(kycStatus?.byLevel.intermediate === "approved" ||
-                  kycStatus?.byLevel.intermediate === "pending") && (
-                  <KYCFormAdvanced
-                    onSubmit={handleAdvancedSubmit}
-                    loading={submitting}
-                  />
-                )}
-              </div>
-            )}
+              )}
+
+              {currentLevel === "advanced" && (
+                <div>
+                  {kycStatus?.byLevel.intermediate !== "approved" &&
+                  kycStatus?.byLevel.intermediate !== "pending" ? (
+                    <div className="text-center py-12">
+                      <Lock className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-white mb-2">
+                        Level Locked
+                      </h3>
+                      <p className="text-gray-400">
+                        You need to complete Intermediate KYC first
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="mb-6 p-4 bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-lg">
+                        <div className="flex items-center">
+                          <TrendingUp className="w-5 h-5 text-[#FFD700] mr-3" />
+                          <p className="text-sm text-yellow-300">
+                            Complete your financial profile
+                          </p>
+                        </div>
+                      </div>
+                      <KYCFormAdvanced
+                        onSubmit={handleAdvancedSubmit}
+                        loading={submitting}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Status Table Section */}
-          <div className="bg-[#0F0F0F] border border-gray-800 rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-              <Shield className="w-6 h-6 mr-3 text-[#FFD700]" />
-              KYC Status Overview
-            </h2>
+          {/* Status Sidebar - Takes 1/3 width */}
+          <div className="lg:col-span-1">
+            <div className="bg-[#0F0F0F] border border-gray-800 rounded-2xl p-6 sticky top-8">
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+                <Shield className="w-5 h-5 mr-2 text-[#FFD700]" />
+                KYC Status
+              </h2>
 
-            {kycStatus && (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-800">
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium">
-                        Level
-                      </th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium">
-                        Status
-                      </th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium">
-                        Submitted Date
-                      </th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium">
-                        Review Notes
-                      </th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {kycStatus.records.map((record) => (
-                      <tr
-                        key={record._id}
-                        className="border-b border-gray-800 hover:bg-gray-900/50 transition-colors"
+              {kycStatus ? (
+                <div className="space-y-6">
+                  {/* Overall Status */}
+                  <div className="p-4 bg-gradient-to-r from-gray-800 to-black rounded-xl">
+                    <p className="text-sm text-gray-400 mb-1">Overall Status</p>
+                    <div className="flex items-center">
+                      {getStatusIcon(kycStatus.overall)}
+                      <span
+                        className={`ml-2 font-semibold ${getStatusColor(kycStatus.overall)}`}
                       >
-                        <td className="py-4 px-6">
-                          <div className="font-medium text-white capitalize">
-                            {record.level}
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center">
-                            {getStatusIcon(record.status)}
-                            <span
-                              className={`ml-2 font-medium ${getStatusColor(record.status)}`}
-                            >
-                              {record.status.replace("_", " ").toUpperCase()}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6 text-gray-400">
-                          {new Date(record.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="py-4 px-6 text-gray-400 max-w-xs">
-                          {record.reviewNotes || "No notes yet"}
-                        </td>
-                        <td className="py-4 px-6">
-                          {record.status === "requires_update" && (
-                            <button
-                              onClick={() => setCurrentLevel(record.level)}
-                              className="px-4 py-2 bg-gradient-to-r from-[#FFD700] to-yellow-500 text-black font-medium rounded-lg hover:opacity-90 transition-opacity"
-                            >
-                              Update
-                            </button>
-                          )}
-                          {record.status === "pending" && (
-                            <span className="text-yellow-400">
-                              Under Admin Review
-                            </span>
-                          )}
-                          {record.status === "approved" && (
-                            <span className="text-green-400 flex items-center">
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Completed
-                            </span>
-                          )}
-                          {record.status === "rejected" && (
-                            <button
-                              onClick={() => setCurrentLevel(record.level)}
-                              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
-                            >
-                              Resubmit
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                        {kycStatus.overall.replace("_", " ").toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
 
-          {/* File Upload Section (Optional) */}
-          <div className="bg-[#0F0F0F] border border-gray-800 rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-              <Upload className="w-6 h-6 mr-3 text-[#FFD700]" />
-              Document Upload Guidelines
-            </h2>
-            <div className="p-6 bg-gradient-to-r from-gray-800 to-black rounded-xl">
-              <h3 className="font-medium text-white mb-3">
-                Supported Documents
-              </h3>
-              <ul className="space-y-2 text-gray-400">
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                  Passport (PDF, JPG, PNG)
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                  National ID (PDF, JPG, PNG)
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                  Driver's License (PDF, JPG, PNG)
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                  Bank Statements (PDF)
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                  Proof of Address (PDF, JPG, PNG)
-                </li>
-              </ul>
-              <div className="mt-6 p-4 bg-yellow-500/10 rounded-lg">
-                <p className="text-yellow-300 text-sm">
-                  <AlertCircle className="inline w-4 h-4 mr-1" />
-                  Maximum file size: 10MB per file
-                </p>
-              </div>
+                  {/* Level Status */}
+                  <div className="space-y-3">
+                    {["basic", "intermediate", "advanced"].map((level) => (
+                      <div
+                        key={level}
+                        className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"
+                      >
+                        <span className="text-gray-300 capitalize">
+                          {level}
+                        </span>
+                        <div className="flex items-center">
+                          {getStatusIcon(
+                            kycStatus.byLevel[
+                              level as keyof typeof kycStatus.byLevel
+                            ],
+                          )}
+                          <span
+                            className={`ml-2 text-sm ${getStatusColor(kycStatus.byLevel[level as keyof typeof kycStatus.byLevel])}`}
+                          >
+                            {kycStatus.byLevel[
+                              level as keyof typeof kycStatus.byLevel
+                            ]
+                              .replace("_", " ")
+                              .toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Document Guidelines */}
+                  <div className="mt-6 p-4 bg-gradient-to-r from-gray-800 to-black rounded-xl">
+                    <h3 className="text-sm font-medium text-white mb-3 flex items-center">
+                      <Upload className="w-4 h-4 mr-2 text-[#FFD700]" />
+                      Document Guidelines
+                    </h3>
+                    <ul className="space-y-2 text-xs text-gray-400">
+                      <li className="flex items-center">
+                        <CheckCircle className="w-3 h-3 text-green-400 mr-2" />
+                        Passport, National ID, or Driver's License
+                      </li>
+                      <li className="flex items-center">
+                        <CheckCircle className="w-3 h-3 text-green-400 mr-2" />
+                        Bank statements (last 3 months)
+                      </li>
+                      <li className="flex items-center">
+                        <CheckCircle className="w-3 h-3 text-green-400 mr-2" />
+                        Proof of address
+                      </li>
+                      <li className="flex items-center">
+                        <CheckCircle className="w-3 h-3 text-green-400 mr-2" />
+                        Employment letter (if applicable)
+                      </li>
+                      <li className="flex items-center">
+                        <AlertCircle className="w-3 h-3 text-yellow-400 mr-2" />
+                        Max file size: 10MB per file
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-400">No KYC data found</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Start by submitting Basic KYC
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
