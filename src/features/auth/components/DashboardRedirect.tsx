@@ -11,11 +11,11 @@ export default function DashboardRedirect() {
 
   let redirectPath = "/dashboard";
 
-  if (user?.role === "admin") {
+  if (user?.role === "admin" || user?.role === "super_admin") {
     redirectPath = "/admin";
-  } else if (user?.role === "business_owner") {
-    redirectPath = "/business"; // FIXED
-  } else if (user?.role === "investor") {
+  } else if (user?.role === "local_business" || user?.role === "business_owner") {
+    redirectPath = "/business";
+  } else if (user?.role === "diaspora_investor" || user?.role === "investor") {
     redirectPath = "/investor";
   }
 

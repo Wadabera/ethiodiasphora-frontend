@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Sparkles } from "lucide-react";
 import type { CreateIPORequest } from "../types/businessIPOtypes";
 
 interface Props {
@@ -239,11 +240,52 @@ export const CreateIPOForm: React.FC<Props> = ({
     return `${year}-${month}-${day}`;
   };
 
+  const fillDemoIpo = () => {
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() + 1);
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() + 20);
+
+    const sStr = startDate.toISOString().split("T")[0];
+    const eStr = endDate.toISOString().split("T")[0];
+
+    const rnd = Math.floor(100 + Math.random() * 900);
+    setFormData({
+      symbol: `ABYSS${rnd}`,
+      offerPrice: 250,
+      startDate: sStr,
+      endDate: eStr,
+      prospectusUrl: "https://abyssiniacoffee.et/prospectus.pdf",
+      totalShares: 100000,
+      minimumLot: 10,
+      maximumLot: 1000,
+      faceValue: 100,
+      lotSize: 10,
+      issueSize: 25000000,
+      description: "Initial Public Offering for modernizing agro-processing facilities, expanding green export storage, and international logistics.",
+      sector: "Agriculture",
+      industry: "Agro-Processing & Export",
+      ipoType: "fresh_issue",
+    });
+    setErrors({});
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
       className="space-y-6 bg-[#2A2A2A] p-6 rounded-lg border border-gray-700"
     >
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={fillDemoIpo}
+          className="px-4 py-2 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/50 text-[#FFD700] rounded-xl font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-lg"
+        >
+          <Sparkles size={14} /> Fill Demo IPO Data
+        </button>
+      </div>
+
       {error && (
         <div className="bg-red-900/30 border border-red-800 text-red-400 px-4 py-3 rounded">
           {error}

@@ -39,16 +39,16 @@ export default function BusinessHeader() {
         {/* Right Actions */}
         <div className="flex items-center gap-4">
           {/* New Project */}
-          <Link to="/investments/create">
-            <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-yellow-600 text-white rounded-lg hover:from-orange-700 hover:to-yellow-700 transition-all">
+          <Link to="/business/investments/create">
+            <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-yellow-600 text-white rounded-lg hover:from-orange-700 hover:to-yellow-700 transition-all cursor-pointer">
               <PlusCircle size={18} />
               <span>Add Project</span>
             </button>
           </Link>
 
-          {/* Investors */}
-          <Link to="/business/investors">
-            <button className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-gray-300 border border-gray-700 rounded-lg hover:border-yellow-600 hover:text-yellow-400 transition-all">
+          {/* Investors / Manage Investments */}
+          <Link to="/business/manageInvestment">
+            <button className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-gray-300 border border-gray-700 rounded-lg hover:border-yellow-600 hover:text-yellow-400 transition-all cursor-pointer">
               <Users size={18} />
               <span>My Investors</span>
             </button>
@@ -56,7 +56,7 @@ export default function BusinessHeader() {
 
           {/* Notifications */}
           <Link to="/business/notifications">
-            <button className="relative p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-yellow-600 transition-colors">
+            <button className="relative p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-yellow-600 transition-colors cursor-pointer">
               <Bell size={20} className="text-gray-300 hover:text-yellow-400" />
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-xs text-white rounded-full flex items-center justify-center">
                 8

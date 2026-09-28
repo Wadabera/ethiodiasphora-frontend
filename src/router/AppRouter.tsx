@@ -3,6 +3,7 @@ import LandingPages from "@/pages/LandingPages";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import LoginPages from "@/features/auth/pages/LoginPages";
 import RegisterPages from "@/features/auth/pages/RegisterPages";
+import VerifyEmailPage from "@/features/auth/pages/VerifyEmailPage";
 
 // ========== ADMIN FEATURES ==========
 import AdminMainDashboardPage from "@/AdminFeatures/Dashboard/pages/AdminMainDashboardPage";
@@ -37,6 +38,8 @@ import InvestmentDetailsPage from "@/InvestorFearutes/Investment/components/Inve
 import KycApprovementPage from "@/AdminFeatures/kycApproved/pages/KycApprovementPage";
 import AdminProfilePage from "@/AdminFeatures/profiles/pages/AdminProfilePage";
 import AdminKycPage from "@/features/kyc/pages/AdminKycPage";
+import AdminUsersPage from "@/AdminFeatures/users/AdminUsersPage";
+import AdminSettingsPage from "@/AdminFeatures/settings/AdminSettingsPage";
 
 // ========== SHARED ==========
 import DashboardRedirect from "@/features/auth/components/DashboardRedirect";
@@ -66,6 +69,7 @@ const AppRouter = () => {
         <Route path="/" element={<LandingPages />} />
         <Route path="/login" element={<LoginPages />} />
         <Route path="/register" element={<RegisterPages />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
 
         <Route path="/market-exchange" element={<MarketExchangePage />} />
         <Route path="/currency" element={<CurrencyPageWrapper />} />
@@ -102,7 +106,11 @@ const AppRouter = () => {
           {/* <Route path="ipo/pending" element={<AdminIPOPendingPage />} /> */}
           <Route path="kycApproved" element={<KycApprovementPage />} />
           <Route path="kyc" element={<AdminKycPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="settings" element={<AdminSettingsPage />} />
           <Route path="profiles" element={<AdminProfilePage />} />
+          <Route path="notifications" element={<Notifactionpage />} />
+          <Route path="notification" element={<Notifactionpage />} />
         </Route>
 
         {/* ===== BUSINESS OWNER ROUTES ===== */}
@@ -121,6 +129,14 @@ const AppRouter = () => {
             path="manageInvestment"
             element={<MyInvestmentPortfolioPage />}
           />
+          <Route
+            path="manage-investment"
+            element={<MyInvestmentPortfolioPage />}
+          />
+          <Route
+            path="manageinvestment"
+            element={<MyInvestmentPortfolioPage />}
+          />
           <Route path="company/create" element={<CompanyRegisterPage />} />
           <Route path="company/profile" element={<CompanyProfilePage />} />
           <Route path="kyc" element={<BusinessKycPage />} />
@@ -132,6 +148,7 @@ const AppRouter = () => {
           <Route path="remittance" element={<RemittancePage />} />
           <Route path="profile" element={<BusinessManProPage />} />
           <Route path="notification" element={<Notifactionpage />} />
+          <Route path="notifications" element={<Notifactionpage />} />
         </Route>
 
         {/* ===== INVESTOR ROUTES ===== */}
@@ -156,6 +173,8 @@ const AppRouter = () => {
           <Route path="investipo" element={<IpoBrowsePage />} />
           <Route path="investments" element={<NewInvestmentPage />} />
           <Route path="investments/:id" element={<InvestmentDetailsPage />} />
+          <Route path="notification" element={<Notifactionpage />} />
+          <Route path="notifications" element={<Notifactionpage />} />
         </Route>
       </Routes>
     </BrowserRouter>

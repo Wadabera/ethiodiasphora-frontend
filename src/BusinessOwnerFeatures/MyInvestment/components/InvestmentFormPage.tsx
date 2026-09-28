@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Briefcase,
   MapPin,
+  Sparkles,
   // Info,
 } from "lucide-react";
 
@@ -223,6 +224,26 @@ riskFactors:"mideum",
     // navigate("/business/investments"); // Uncomment if you want navigation
   };
 
+  const fillDemoInvestment = () => {
+    setFormData({
+      title: "Awash Solar Irrigation & Agri-Hub",
+      businessName: "Abyssinia Specialty Coffee Export PLC",
+      industry: "Agriculture",
+      sector: "Renewable Energy & Agriculture",
+      description: "Installation of solar-powered drip irrigation system across 200 hectares of farmland in the Awash river basin, multiplying harvest cycles from 1 to 3 seasons annually.",
+      fundingGoal: 200000,
+      expectedReturn: 19.5,
+      investmentPeriod: 14,
+      minimumInvestment: 1500,
+      maxInvestment: 60000,
+      riskLevel: "medium",
+      riskFactors: "Seasonal river flow variations, mitigated by integrated deep groundwater solar borehole backups.",
+      businessPlan: "Direct off-take contract with regional agricultural trade unions and export pack-houses ensures steady dollar revenue.",
+      useOfFunds: "55% solar pumps & drip lines, 25% pack-house construction, 20% working capital.",
+      location: "Awash Valley, Afar / Oromia border",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-4 md:p-6">
       {/* Success Modal */}
@@ -289,20 +310,29 @@ riskFactors:"mideum",
 
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-black" />
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-black" />
+              </div>
+              <h1 className="text-3xl font-bold">
+                <span className="bg-gradient-to-r from-yellow-500 to-yellow-300 bg-clip-text text-transparent">
+                  Create Investment
+                </span>
+              </h1>
             </div>
-            <h1 className="text-3xl font-bold">
-              <span className="bg-gradient-to-r from-yellow-500 to-yellow-300 bg-clip-text text-transparent">
-                Create Investment
-              </span>
-            </h1>
+            <p className="text-gray-400">
+              Fill in the details below to create your investment opportunity
+            </p>
           </div>
-          <p className="text-gray-400">
-            Fill in the details below to create your investment opportunity
-          </p>
+          <button
+            type="button"
+            onClick={fillDemoInvestment}
+            className="px-4 py-2.5 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/50 text-[#FFD700] rounded-xl font-semibold text-sm transition-all flex items-center gap-2 self-start cursor-pointer shadow-lg"
+          >
+            <Sparkles size={16} /> Fill Demo Data
+          </button>
         </div>
 
         {/* Error Display */}

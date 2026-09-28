@@ -1,7 +1,7 @@
 // services/ServiceManager.ts
 import api from "./api";
 import type { KYCResponse, KYCStatusResponse } from "../features/kyc/types/kycTypes";
-import type { Investment, InvestmentFilters } from "../features/investment/types/investmentTypes";
+import type { Investment, InvestmentFilters } from "../types/index";
 
 class ServiceManager {
   private static instance: ServiceManager;

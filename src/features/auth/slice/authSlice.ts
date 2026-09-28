@@ -21,6 +21,11 @@ const initialState: AuthState = {
   loading: false,
   error: null,
   token: localStorage.getItem("token") || null,
+  verificationEmail: null,
+  verificationLoading: false,
+  verificationSuccess: false,
+  verificationMessage: null,
+  verificationOtp: null,
 };
 
 // ✅ LOGIN - Returns user WITH role
@@ -31,10 +36,9 @@ export const loginUser = createAsyncThunk<
 >("auth/loginUser", async (userData, { rejectWithValue }) => {
   try {
     const response = await api.post<LoginResponse>(
-      "/api/v1/auth/login/",
+      "/api/v1/auth/login",
       userData,
     );
-
 
     if (response.data.access_token) {
       localStorage.setItem("token", response.data.access_token);
@@ -44,8 +48,12 @@ export const loginUser = createAsyncThunk<
 
     return response.data;
   } catch (error: any) {
+    const errorMsg =
+      Array.isArray(error.response?.data?.message)
+        ? error.response.data.message.join(", ")
+        : error.response?.data?.message || error.message || "Login failed";
     return rejectWithValue({
-      message: error.response?.data?.message || error.message || "Login failed",
+      message: errorMsg,
       status: error.response?.status,
     });
   }
@@ -58,13 +66,76 @@ export const registerUser = createAsyncThunk<
   { rejectValue: { message: string; status?: number } }
 >("auth/registerUser", async (userData, { rejectWithValue }) => {
   try {
-    // ✅ userData includes: fullName, email, password, role, phoneNumber
-    const response = await api.post("/api/v1/auth/register/", userData);
+    const nameParts = (userData.fullName || "").trim().split(/\s+/);
+    const firstName = userData.firstName || nameParts[0] || "User";
+    const lastName =
+      userData.lastName ||
+      (nameParts.length > 1 ? nameParts.slice(1).join(" ") : nameParts[0]) ||
+      "User";
+
+    let phone = (userData.phoneNumber || "").trim();
+    if (phone && !phone.startsWith("+")) {
+      phone = phone.startsWith("0") ? `+251${phone.slice(1)}` : `+251${phone}`;
+    }
+
+    const payload = {
+      ...userData,
+      firstName,
+      lastName,
+      phoneNumber: phone.length >= 10 ? phone : "+251911223344",
+    };
+
+    const response = await api.post("/api/v1/auth/register", payload);
     return response.data;
   } catch (error: any) {
+    const errorMsg =
+      Array.isArray(error.response?.data?.message)
+        ? error.response.data.message.join(", ")
+        : error.response?.data?.message || error.message || "Register failed";
     return rejectWithValue({
-      message:
-        error.response?.data?.message || error.message || "Register failed",
+      message: errorMsg,
+      status: error.response?.status,
+    });
+  }
+});
+
+// ✅ VERIFY EMAIL OTP - Activates account
+export const verifyEmailOtp = createAsyncThunk<
+  { message: string },
+  { email: string; otp: string },
+  { rejectValue: { message: string; status?: number } }
+>("auth/verifyEmailOtp", async ({ email, otp }, { rejectWithValue }) => {
+  try {
+    const response = await api.post("/api/v1/auth/verify-email", { email, otp });
+    return response.data;
+  } catch (error: any) {
+    const errorMsg =
+      Array.isArray(error.response?.data?.message)
+        ? error.response.data.message.join(", ")
+        : error.response?.data?.message || error.message || "Invalid OTP code";
+    return rejectWithValue({
+      message: errorMsg,
+      status: error.response?.status,
+    });
+  }
+});
+
+// ✅ RESEND VERIFICATION OTP
+export const resendVerificationOtp = createAsyncThunk<
+  { message: string },
+  { email: string },
+  { rejectValue: { message: string; status?: number } }
+>("auth/resendVerificationOtp", async ({ email }, { rejectWithValue }) => {
+  try {
+    const response = await api.post("/api/v1/auth/resend-verification", { email });
+    return response.data;
+  } catch (error: any) {
+    const errorMsg =
+      Array.isArray(error.response?.data?.message)
+        ? error.response.data.message.join(", ")
+        : error.response?.data?.message || error.message || "Failed to resend code";
+    return rejectWithValue({
+      message: errorMsg,
       status: error.response?.status,
     });
   }
@@ -84,6 +155,17 @@ const authSlice = createSlice({
       localStorage.removeItem("user");
     },
     clearError(state) {
+      state.error = null;
+      state.verificationMessage = null;
+    },
+    setVerificationEmail(state, action: PayloadAction<string>) {
+      state.verificationEmail = action.payload;
+    },
+    resetVerificationState(state) {
+      state.verificationLoading = false;
+      state.verificationSuccess = false;
+      state.verificationMessage = null;
+      state.verificationOtp = null;
       state.error = null;
     },
     // ✅ Add this to update user role if needed
@@ -123,23 +205,64 @@ const authSlice = createSlice({
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.verificationSuccess = false;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
-        // ✅ If backend returns user after registration, store it
-        if (action.payload.user) {
-          state.user = action.payload.user;
-          state.isAuthenticated = true;
-          localStorage.setItem("user", JSON.stringify(action.payload.user));
-        }
+        state.verificationEmail = action.meta.arg.email;
+        state.verificationOtp = (action.payload as any)?.otp || null;
+        state.verificationSuccess = false;
+        state.verificationMessage = action.payload.message;
+        // Do not set isAuthenticated = true here because email needs verification!
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Register failed";
+      })
+
+      // ===== VERIFY EMAIL CASES =====
+      .addCase(verifyEmailOtp.pending, (state) => {
+        state.verificationLoading = true;
+        state.error = null;
+        state.verificationSuccess = false;
+      })
+      .addCase(verifyEmailOtp.fulfilled, (state, action) => {
+        state.verificationLoading = false;
+        state.verificationSuccess = true;
+        state.verificationMessage = action.payload.message;
+        state.verificationOtp = null;
+        state.error = null;
+      })
+      .addCase(verifyEmailOtp.rejected, (state, action) => {
+        state.verificationLoading = false;
+        state.verificationSuccess = false;
+        state.error = action.payload?.message || "Invalid OTP code";
+      })
+
+      // ===== RESEND VERIFICATION CASES =====
+      .addCase(resendVerificationOtp.pending, (state) => {
+        state.verificationLoading = true;
+        state.error = null;
+      })
+      .addCase(resendVerificationOtp.fulfilled, (state, action) => {
+        state.verificationLoading = false;
+        state.verificationMessage = action.payload.message;
+        state.verificationOtp = (action.payload as any)?.otp || null;
+        state.error = null;
+      })
+      .addCase(resendVerificationOtp.rejected, (state, action) => {
+        state.verificationLoading = false;
+        state.error = action.payload?.message || "Failed to resend code";
       });
   },
 });
 
 export default authSlice.reducer;
-export const { logout, clearError, updateUserRole } = authSlice.actions;
+export const {
+  logout,
+  clearError,
+  updateUserRole,
+  setVerificationEmail,
+  resetVerificationState,
+} = authSlice.actions;

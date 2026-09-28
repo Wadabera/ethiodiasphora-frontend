@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Mail,  Lock, Phone, User } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Phone, User, Sparkles } from "lucide-react";
 import { registerUser } from "../slice/authSlice";
 import { useAppDispatch, useAppSelector } from "../../../hooks/hooks";
 import type { RootState } from "@/store/store";
@@ -124,7 +124,12 @@ export default function Register() {
       const response = await dispatch(registerUser(userData));
 
       if (response.meta.requestStatus === "fulfilled") {
-        navigate("/login");
+        navigate("/verify-email", {
+          state: {
+            email: formData.email,
+            otp: (response.payload as any)?.otp,
+          },
+        });
       }
     } catch (err) {
       console.error("Registration error:", err);
@@ -188,6 +193,83 @@ export default function Register() {
 
       {/* Form Container */}
       <div className="w-full max-w-md bg-[#0F0F0F] border border-gray-800 rounded-2xl p-8 shadow-2xl">
+        {/* Quick Demo Registration Autofill */}
+        <div className="mb-6 p-3.5 bg-gradient-to-r from-yellow-500/10 via-amber-500/5 to-transparent border border-[#FFD700]/30 rounded-xl">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-semibold text-[#FFD700] uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles size={13} className="text-[#FFD700]" /> Demo Quick-Fill
+            </span>
+            <span className="text-[10px] text-gray-400">1-Click Form Fill</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const rnd = Math.floor(100 + Math.random() * 900);
+                setFormData({
+                  fullName: "Sara Tadesse",
+                  phoneNumber: "+251911556677",
+                  email: `demo.investor${rnd}@ethiodiaspora.com`,
+                  password: "Password123!",
+                  confirmPassword: "Password123!",
+                  role: "diaspora_investor",
+                });
+                setFormErrors({ fullName: "", phoneNumber: "", email: "", password: "", confirmPassword: "", role: "" });
+              }}
+              className="px-2 py-2 rounded-lg bg-[#1A1A1A] hover:bg-[#FFD700]/20 border border-gray-700 hover:border-[#FFD700]/60 transition-all text-left group cursor-pointer"
+            >
+              <div className="text-xs font-bold text-white group-hover:text-[#FFD700] flex items-center gap-1">
+                🌍 Investor
+              </div>
+              <div className="text-[10px] text-gray-400 truncate mt-0.5">Sara Tadesse</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const rnd = Math.floor(100 + Math.random() * 900);
+                setFormData({
+                  fullName: "Solomon Desta",
+                  phoneNumber: "+251911223344",
+                  email: `demo.business${rnd}@ethiodiaspora.com`,
+                  password: "Password123!",
+                  confirmPassword: "Password123!",
+                  role: "local_business",
+                });
+                setFormErrors({ fullName: "", phoneNumber: "", email: "", password: "", confirmPassword: "", role: "" });
+              }}
+              className="px-2 py-2 rounded-lg bg-[#1A1A1A] hover:bg-[#FFD700]/20 border border-gray-700 hover:border-[#FFD700]/60 transition-all text-left group cursor-pointer"
+            >
+              <div className="text-xs font-bold text-white group-hover:text-[#FFD700] flex items-center gap-1">
+                💼 Business
+              </div>
+              <div className="text-[10px] text-gray-400 truncate mt-0.5">Solomon Desta</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const rnd = Math.floor(100 + Math.random() * 900);
+                setFormData({
+                  fullName: "Mulugeta Bekele",
+                  phoneNumber: "+251911883344",
+                  email: `demo.admin${rnd}@ethiodiaspora.com`,
+                  password: "Password123!",
+                  confirmPassword: "Password123!",
+                  role: "admin",
+                });
+                setFormErrors({ fullName: "", phoneNumber: "", email: "", password: "", confirmPassword: "", role: "" });
+              }}
+              className="px-2 py-2 rounded-lg bg-[#1A1A1A] hover:bg-[#FFD700]/20 border border-gray-700 hover:border-[#FFD700]/60 transition-all text-left group cursor-pointer"
+            >
+              <div className="text-xs font-bold text-white group-hover:text-[#FFD700] flex items-center gap-1">
+                🛡️ Admin
+              </div>
+              <div className="text-[10px] text-gray-400 truncate mt-0.5">Mulugeta B.</div>
+            </button>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Full Name */}
           <div>

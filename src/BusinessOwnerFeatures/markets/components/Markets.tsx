@@ -1,11 +1,6 @@
-import React from 'react';
+import React from "react";
+import Markets from "@/InvestorFearutes/Markets/components/Markets";
 
-const Markets = () => {
-  return (
-    <div>
-      This is the page of marketting 
-    </div>
-  );
+export default function BusinessMarkets() {
+  return <Markets />;
 }
-
-export default Markets;

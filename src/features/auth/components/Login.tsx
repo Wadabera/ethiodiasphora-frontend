@@ -1,18 +1,27 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Eye, EyeOff, Lock, Mail, Sparkles, UserCheck } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../../hooks/hooks"; // Uncomment this
 import { loginUser } from "../slice/authSlice";
 
 export default function Login() {
   const dispatch = useAppDispatch(); // Uncomment this
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationMessage = (location.state as any)?.message;
+  const locationEmail = (location.state as any)?.email;
 
   const [formData, setFormData] = useState({
-    email: "",
+    email: locationEmail || "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (locationEmail && !formData.email) {
+      setFormData((prev) => ({ ...prev, email: locationEmail }));
+    }
+  }, [locationEmail]);
 
   // Get loading and error from Redux store
   const { loading, user, error } = useAppSelector((state) => state.auth); // Uncomment this
@@ -84,15 +93,128 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         {/* Login Form Card */}
         <div className="bg-[#0F0F0F] border border-gray-800 rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-2xl font-bold text-white mb-8 text-center">
+          <h2 className="text-2xl font-bold text-white mb-4 text-center">
             Login to Account
           </h2>
+
+          {/* Quick Demo Credentials Autofill */}
+          <div className="mb-6 p-3.5 bg-gradient-to-r from-yellow-500/10 via-amber-500/5 to-transparent border border-[#FFD700]/30 rounded-xl">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-[#FFD700] uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles size={13} className="text-[#FFD700]" /> Quick Demo Auto-fill
+              </span>
+              <span className="text-[10px] text-gray-400">1-Click Sign-in</span>
+            </div>
+            <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ email: "business@ethiodiaspora.com", password: "Password123!" })}
+                  className={`px-2.5 py-2 rounded-lg border text-left transition-all cursor-pointer ${
+                    formData.email === "business@ethiodiaspora.com"
+                      ? "bg-[#FFD700]/20 border-[#FFD700] text-[#FFD700]"
+                      : "bg-[#1A1A1A] hover:bg-[#252525] border-gray-700 text-gray-300 hover:border-gray-500"
+                  }`}
+                >
+                  <div className="text-xs font-bold truncate flex items-center gap-1">
+                    💼 Business
+                  </div>
+                  <div className="text-[10px] text-gray-400 truncate mt-0.5">Dawit Haile</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormData({ email: "investor@ethiodiaspora.com", password: "Password123!" })}
+                  className={`px-2.5 py-2 rounded-lg border text-left transition-all cursor-pointer ${
+                    formData.email === "investor@ethiodiaspora.com"
+                      ? "bg-[#FFD700]/20 border-[#FFD700] text-[#FFD700]"
+                      : "bg-[#1A1A1A] hover:bg-[#252525] border-gray-700 text-gray-300 hover:border-gray-500"
+                  }`}
+                >
+                  <div className="text-xs font-bold truncate flex items-center gap-1">
+                    🌍 Investor
+                  </div>
+                  <div className="text-[10px] text-gray-400 truncate mt-0.5">Sara Tadesse</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormData({ email: "admin@ethiodiaspora.com", password: "Password123!" })}
+                  className={`px-2.5 py-2 rounded-lg border text-left transition-all cursor-pointer ${
+                    formData.email === "admin@ethiodiaspora.com"
+                      ? "bg-[#FFD700]/20 border-[#FFD700] text-[#FFD700]"
+                      : "bg-[#1A1A1A] hover:bg-[#252525] border-gray-700 text-gray-300 hover:border-gray-500"
+                  }`}
+                >
+                  <div className="text-xs font-bold truncate flex items-center gap-1">
+                    🛡️ Admin
+                  </div>
+                  <div className="text-[10px] text-gray-400 truncate mt-0.5">System Admin</div>
+                </button>
+              </div>
+
+              {/* Second row of active accounts */}
+              <div className="grid grid-cols-3 gap-2 pt-1 border-t border-gray-800/60">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ email: "owner@ethiodiaspora.com", password: "Password123!" })}
+                  className={`px-2.5 py-2 rounded-lg border text-left transition-all cursor-pointer ${
+                    formData.email === "owner@ethiodiaspora.com"
+                      ? "bg-[#FFD700]/20 border-[#FFD700] text-[#FFD700]"
+                      : "bg-[#1A1A1A] hover:bg-[#252525] border-gray-700 text-gray-300 hover:border-gray-500"
+                  }`}
+                >
+                  <div className="text-xs font-bold truncate flex items-center gap-1">
+                    🌾 Owner
+                  </div>
+                  <div className="text-[10px] text-gray-400 truncate mt-0.5">Solomon Desta</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormData({ email: "diaspora@ethiodiaspora.com", password: "Password123!" })}
+                  className={`px-2.5 py-2 rounded-lg border text-left transition-all cursor-pointer ${
+                    formData.email === "diaspora@ethiodiaspora.com"
+                      ? "bg-[#FFD700]/20 border-[#FFD700] text-[#FFD700]"
+                      : "bg-[#1A1A1A] hover:bg-[#252525] border-gray-700 text-gray-300 hover:border-gray-500"
+                  }`}
+                >
+                  <div className="text-xs font-bold truncate flex items-center gap-1">
+                    ✈️ Diaspora
+                  </div>
+                  <div className="text-[10px] text-gray-400 truncate mt-0.5">Hanna Girma</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormData({ email: "superadmin@ethiodiaspora.com", password: "Password123!" })}
+                  className={`px-2.5 py-2 rounded-lg border text-left transition-all cursor-pointer ${
+                    formData.email === "superadmin@ethiodiaspora.com"
+                      ? "bg-[#FFD700]/20 border-[#FFD700] text-[#FFD700]"
+                      : "bg-[#1A1A1A] hover:bg-[#252525] border-gray-700 text-gray-300 hover:border-gray-500"
+                  }`}
+                >
+                  <div className="text-xs font-bold truncate flex items-center gap-1">
+                    ⚡ SuperAdmin
+                  </div>
+                  <div className="text-[10px] text-gray-400 truncate mt-0.5">Mulugeta B.</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* SUCCESS DISPLAY */}
+          {locationMessage && (
+            <div className="mb-6 p-4 bg-green-500/10 border border-green-500/40 rounded-lg animate-fadeIn">
+              <p className="text-sm font-medium text-green-400">{locationMessage}</p>
+            </div>
+          )}
 
           {/* ERROR DISPLAY - RED COLOR */}
           {error && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg animate-fadeIn">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
+              <div className="flex items-start">
+                <div className="flex-shrink-0 mt-0.5">
                   <svg
                     className="h-5 w-5 text-red-400"
                     viewBox="0 0 20 20"
@@ -107,6 +229,18 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-red-400">{error}</p>
+                  {(error.toLowerCase().includes("not active") ||
+                    error.toLowerCase().includes("verify your email") ||
+                    error.toLowerCase().includes("not verified")) && (
+                    <div className="mt-2.5">
+                      <Link
+                        to={`/verify-email?email=${encodeURIComponent(formData.email)}`}
+                        className="inline-block text-xs font-bold text-[#FFD700] hover:underline bg-[#FFD700]/10 px-3 py-1.5 rounded-md border border-[#FFD700]/30 transition-colors"
+                      >
+                        → Verify Email & Activate Account
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

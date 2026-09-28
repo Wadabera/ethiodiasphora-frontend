@@ -6,6 +6,7 @@ import {
   // Home,
   Banknote,
   Percent,
+  Sparkles,
 } from "lucide-react";
 import { DocumentUploader } from "./DocumentUploader";
 
@@ -84,15 +85,42 @@ export const KYCFormAdvanced: React.FC<KYCFormAdvancedProps> = ({
     }
   };
 
+  const fillDemoAdvanced = () => {
+    const dummyBlob = new Blob(["demo-pdf-content"], { type: "application/pdf" });
+    const dummyBankStatement = new File([dummyBlob], "demo_cbe_bank_statement.pdf", { type: "application/pdf" });
+    const dummyProofOfAddress = new File([dummyBlob], "demo_utility_bill.pdf", { type: "application/pdf" });
+    const dummyEmployment = new File([dummyBlob], "demo_employment_contract.pdf", { type: "application/pdf" });
+
+    setFormData({
+      sourceOfFunds: "employment_salary",
+      bankStatement: dummyBankStatement,
+      proofOfAddress: dummyProofOfAddress,
+      employmentLetter: dummyEmployment,
+      taxIdentificationNumber: "TIN-9823471029",
+      bankName: "Commercial Bank of Ethiopia (CBE)",
+      bankAccountNumber: "1000293847291",
+    });
+    setFormErrors({});
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2">
-          Financial Verification
-        </h2>
-        <p className="text-gray-400">
-          Provide financial information for investment eligibility
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Financial Verification
+          </h2>
+          <p className="text-gray-400">
+            Provide financial information for investment eligibility
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={fillDemoAdvanced}
+          className="px-4 py-2 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/50 text-[#FFD700] rounded-xl font-semibold text-xs transition-all flex items-center gap-1.5 self-start cursor-pointer shadow-lg"
+        >
+          <Sparkles size={14} /> Fill Demo KYC
+        </button>
       </div>
 
       {/* Source of Funds */}

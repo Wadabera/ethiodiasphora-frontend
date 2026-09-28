@@ -1,6 +1,7 @@
 // InvestorFeatures/IPOInvesting/components/SubscribeIPOForm.tsx
 
 import React, { useState, useEffect } from "react";
+import { Sparkles } from "lucide-react";
 import type{ InvestorIPO, SubscribeRequest } from "../types/investorIPOtypes";
 
 interface Props {
@@ -59,9 +60,22 @@ export const SubscribeIPOForm: React.FC<Props> = ({
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-[#2A2A2A] rounded-lg border border-gray-700 p-6 max-w-lg w-full">
-        <h3 className="text-xl font-bold text-white mb-4">
-          Subscribe to {ipo.symbol}
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-white">
+            Subscribe to {ipo.symbol}
+          </h3>
+          <button
+            type="button"
+            onClick={() => {
+              const demoLots = Math.max(ipo.minimumLot, 5);
+              setLots(demoLots);
+              setQuantity(demoLots * ipo.lotSize);
+            }}
+            className="px-2.5 py-1 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/40 text-[#FFD700] rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer"
+          >
+            <Sparkles size={12} /> Fill Demo
+          </button>
+        </div>
 
         {/* IPO Summary */}
         <div className="bg-[#1A1A1A] p-4 rounded-lg mb-6">

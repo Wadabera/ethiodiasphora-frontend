@@ -31,6 +31,7 @@ import {
   Trash2,
   Clock,
   Shield,
+  Sparkles,
 } from "lucide-react";
 
 const CompanyRegisterPage = () => {
@@ -341,6 +342,42 @@ const CompanyRegisterPage = () => {
     }));
   }, []);
 
+  const fillDemoCompany = useCallback(() => {
+    const rnd = Math.floor(1000 + Math.random() * 9000);
+    setFormData({
+      name: `Abyssinia Premium Logistics PLC`,
+      registrationNumber: `ETH-COM-2026-${rnd}`,
+      tinNumber: `00${rnd}8891`,
+      businessType: BusinessType.PRIVATE_LIMITED_COMPANY,
+      email: "business@ethiodiaspora.com",
+      phone: "+251911000002",
+      website: "https://abyssiniacoffee.et",
+      address: {
+        street: "Bole Medhanialem, Sub-city 03",
+        city: "Addis Ababa",
+        state: "Addis Ababa",
+        postalCode: "1000",
+        country: "Ethiopia",
+      },
+      industry: "Agriculture",
+      description: "Leading producer and exporter of single-origin specialty Arabica coffee and agri-logistics.",
+      documents: {
+        registrationCertificate: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c",
+        tinCertificate: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c",
+        businessLicense: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c",
+      },
+      directors: [
+        {
+          fullName: "Dawit Haile",
+          position: "Managing Director",
+          nationality: "Ethiopian",
+          idNumber: "ETH-NAT-98442",
+        },
+      ],
+    });
+    setErrors({});
+  }, []);
+
   // ============ 10. SUBMIT HANDLER ============
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -626,14 +663,14 @@ const CompanyRegisterPage = () => {
       {/* ===== HEADER ===== */}
       <div className="border-b border-gray-800 bg-gray-900/50 sticky top-0 z-40 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleDashboard}
-              className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-400" />
-            </button>
-            <div>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleDashboard}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-400" />
+              </button>
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg">
                   <Building2 className="w-6 h-6 text-black" />
@@ -648,6 +685,13 @@ const CompanyRegisterPage = () => {
                 </div>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={fillDemoCompany}
+              className="px-4 py-2 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/50 text-[#FFD700] rounded-xl font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer shadow-lg"
+            >
+              <Sparkles size={16} /> Fill Demo Company
+            </button>
           </div>
         </div>
       </div>

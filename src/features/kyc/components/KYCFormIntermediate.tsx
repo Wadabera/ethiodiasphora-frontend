@@ -1,6 +1,6 @@
 // src/features/kyc/components/KYCFormIntermediate.tsx
 import React, { useState } from "react";
-import { FileText, IdCard, Briefcase, DollarSign } from "lucide-react";
+import { FileText, IdCard, Briefcase, DollarSign, Sparkles } from "lucide-react";
 import { DocumentUploader } from "./DocumentUploader";
 
 interface KYCFormIntermediateProps {
@@ -96,16 +96,43 @@ export const KYCFormIntermediate: React.FC<KYCFormIntermediateProps> = ({
     }
   };
 
+  const fillDemoIntermediate = () => {
+    const dummyBlob = new Blob(["demo-image"], { type: "image/png" });
+    const dummyFile = new File([dummyBlob], "demo_passport.png", { type: "image/png" });
+    const selfieFile = new File([dummyBlob], "demo_selfie.png", { type: "image/png" });
+
+    setFormData({
+      idDocumentType: "passport",
+      idDocumentNumber: "EP9844210",
+      idDocumentFrontImage: dummyFile,
+      idDocumentBackImage: dummyFile,
+      selfieImage: selfieFile,
+      employmentStatus: "employed",
+      occupation: "Agribusiness Director & Investor",
+      annualIncome: "85000",
+    });
+    setFormErrors({});
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Rest of your JSX remains exactly the same */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2">
-          Identity Verification
-        </h2>
-        <p className="text-gray-400">
-          Upload your identity documents for verification
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Identity Verification
+          </h2>
+          <p className="text-gray-400">
+            Upload your identity documents for verification
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={fillDemoIntermediate}
+          className="px-4 py-2 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/50 text-[#FFD700] rounded-xl font-semibold text-xs transition-all flex items-center gap-1.5 self-start cursor-pointer shadow-lg"
+        >
+          <Sparkles size={14} /> Fill Demo KYC
+        </button>
       </div>
 
       {/* Document Type */}

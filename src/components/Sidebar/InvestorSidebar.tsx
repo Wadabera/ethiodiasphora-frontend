@@ -9,6 +9,7 @@ import {
   User,
   Briefcase,
   FileText,
+  Bell,
   LogOut,
 } from "lucide-react";
 import { InvestorBaseSidebar } from "./InvestorBaseSidebar";
@@ -36,6 +37,7 @@ const menuItems = [
   // Profile & Settings
   { icon: ShieldCheck, label: "KYC Verification", href: "/investor/kyc" },
   { icon: User, label: "Profile", href: "/investor/profile" },
+  { icon: Bell, label: "Notifications", href: "/investor/notification" },
 
   // Logout
   { icon: LogOut, label: "Log Out", href: "#", isLogout: true },

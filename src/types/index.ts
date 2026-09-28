@@ -19,7 +19,9 @@ export interface LoginCredentials {
 }
 
 export interface RegisterData {
-  fullName: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   password: string;
   role: string;
@@ -37,6 +39,11 @@ export interface AuthState {
   loading: boolean;
   error: string | null;
   token: string | null;
+  verificationEmail?: string | null;
+  verificationOtp?: string | null;
+  verificationLoading?: boolean;
+  verificationSuccess?: boolean;
+  verificationMessage?: string | null;
 }
 
 export interface Investor {

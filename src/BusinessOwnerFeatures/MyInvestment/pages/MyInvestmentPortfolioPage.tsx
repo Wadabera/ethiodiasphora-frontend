@@ -27,6 +27,7 @@ import {
   // Filter,
   RefreshCw,
   Eye,
+  Sparkles,
 } from "lucide-react";
 
 const MyInvestmentPortfolioPage = () => {
@@ -45,6 +46,7 @@ const MyInvestmentPortfolioPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedInvestments, setExpandedInvestments] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [localDemoInvestments, setLocalDemoInvestments] = useState<Investment[] | null>(null);
 
   useEffect(() => {
     loadPortfolio();
@@ -61,6 +63,96 @@ const MyInvestmentPortfolioPage = () => {
     }
   };
 
+  const fillDemoPortfolio = () => {
+    const demos: any[] = [
+      {
+        _id: "demo_inv_01",
+        title: "Abyssinia Organic Sidama Coffee Expansion",
+        description: "Scaling export washed coffee processing capacity in Sidama region by adding eco-pulpers and expanding direct export warehousing.",
+        businessOwnerId: "demo_bo_01",
+        businessName: "Abyssinia Specialty Coffee Export PLC",
+        sector: "Agriculture",
+        industry: "Agribusiness & Coffee Export",
+        location: "Hawassa, Sidama Region",
+        fundingGoal: 150000,
+        currentFunding: 15000,
+        minimumInvestment: 1000,
+        expectedReturn: 18.5,
+        investmentPeriod: 12,
+        status: "published",
+        fundingProgress: "10.00",
+        totalInvestors: 1,
+        investorsDetails: [
+          {
+            investorName: "Sara Tadesse",
+            investorEmail: "investor@ethiodiaspora.com",
+            investorPhone: "+251911000003",
+            amount: 15000,
+            investmentDate: "2026-09-28T08:00:33.340Z",
+            status: "approved",
+          },
+        ],
+        businessPlan: "Expansion of specialty washed coffee cherry receiving stations.",
+        useOfFunds: "60% processing machinery, 40% warehousing.",
+        riskFactors: "Weather risks mitigated with forward contracts.",
+      },
+      {
+        _id: "demo_inv_02",
+        title: "Sheba Logistics & Cold Chain Infrastructure",
+        description: "Construction of temperature-controlled refrigerated storage warehouses and electric delivery fleet connecting Ethiopian rural farmers to urban retail markets.",
+        businessOwnerId: "demo_bo_01",
+        businessName: "Abyssinia Specialty Coffee Export PLC",
+        sector: "Logistics",
+        industry: "Supply Chain & Cold Storage",
+        location: "Modjo Dry Port / Addis Ababa",
+        fundingGoal: 250000,
+        currentFunding: 2000,
+        minimumInvestment: 2000,
+        expectedReturn: 21.0,
+        investmentPeriod: 18,
+        status: "published",
+        fundingProgress: "0.80",
+        totalInvestors: 1,
+        investorsDetails: [
+          {
+            investorName: "Sara Tadesse",
+            investorEmail: "investor@ethiodiaspora.com",
+            investorPhone: "+251911000003",
+            amount: 2000,
+            investmentDate: "2026-09-28T09:14:03.062Z",
+            status: "pending",
+          },
+        ],
+        businessPlan: "Refrigeration hubs at Modjo dry port.",
+        useOfFunds: "50% cold storage construction, 30% EV vans, 20% IoT tracking.",
+        riskFactors: "Initial grid infrastructure integration delays.",
+      },
+      {
+        _id: "demo_inv_03",
+        title: "Awash Solar Irrigation & Agri-Hub",
+        description: "Installation of solar-powered drip irrigation system across 200 hectares of farmland in the Awash river basin, multiplying harvest cycles from 1 to 3 seasons annually.",
+        businessOwnerId: "demo_bo_01",
+        businessName: "Abyssinia Specialty Coffee Export PLC",
+        sector: "Technology",
+        industry: "Agriculture",
+        location: "Awash Valley, Afar / Oromia border",
+        fundingGoal: 200000,
+        currentFunding: 0,
+        minimumInvestment: 1500,
+        expectedReturn: 19.5,
+        investmentPeriod: 14,
+        status: "draft",
+        fundingProgress: "0.00",
+        totalInvestors: 0,
+        investorsDetails: [],
+        businessPlan: "Direct off-take contract with regional agricultural trade unions.",
+        useOfFunds: "55% solar pumps & drip lines, 25% pack-house, 20% working capital.",
+        riskFactors: "Low risk with guaranteed export off-take.",
+      },
+    ];
+    setLocalDemoInvestments(demos);
+  };
+
   const toggleInvestment = (investmentId: string) => {
     setExpandedInvestments((prev) =>
       prev.includes(investmentId)
@@ -70,25 +162,36 @@ const MyInvestmentPortfolioPage = () => {
   };
 
   // Safe data with defaults
-  const safeInvestments = myCreatedInvestments || [];
+  const safeInvestments =
+    myCreatedInvestments && myCreatedInvestments.length > 0
+      ? myCreatedInvestments
+      : localDemoInvestments || [];
+
   const safeSummary = portfolioSummary || {
-    totalOpportunities: 0,
-    draftOpportunities: 0,
-    approvedOpportunities: 0,
-    fundedOpportunities: 0,
-    totalFundingGoal: 0,
-    totalRaised: 0,
-    totalInvestors: 0,
-    averageFundingProgress: "0",
+    totalOpportunities: safeInvestments.length,
+    draftOpportunities: safeInvestments.filter((i) => i.status === "draft").length,
+    approvedOpportunities: safeInvestments.filter((i) => i.status === "published" || i.status === "active").length,
+    fundedOpportunities: safeInvestments.filter((i) => i.status === "funded").length,
+    totalFundingGoal: safeInvestments.reduce((sum, i) => sum + (Number(i.fundingGoal) || 0), 0),
+    totalRaised: safeInvestments.reduce((sum, i) => sum + (Number(i.currentFunding) || 0), 0),
+    totalInvestors: safeInvestments.reduce((sum, i) => sum + (Number(i.interestedInvestors) || i.investorsDetails?.length || 0), 0),
+    averageFundingProgress:
+      safeInvestments.length > 0
+        ? (
+            safeInvestments.reduce((sum, i) => sum + (parseFloat(String(i.fundingProgress)) || 0), 0) /
+            safeInvestments.length
+          ).toFixed(2)
+        : "0",
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: any) => {
+    const val = Number(amount) || 0;
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "ETB",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(val);
   };
 
   const formatDate = (dateString: string) => {
@@ -207,20 +310,28 @@ const MyInvestmentPortfolioPage = () => {
                 </p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={loadPortfolio}
                 disabled={refreshing}
-                className="px-4 py-2 bg-gray-800/50 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition-all flex items-center gap-2"
+                className="px-3.5 py-2 bg-gray-800/50 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition-all flex items-center gap-1.5 cursor-pointer text-sm"
               >
                 <RefreshCw
-                  className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+                  className={`w-4 h-4 ${refreshing ? "animate-spin text-yellow-400" : ""}`}
                 />
                 Refresh
               </button>
               <button
+                type="button"
+                onClick={fillDemoPortfolio}
+                className="px-4 py-2 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/50 text-[#FFD700] rounded-lg font-semibold text-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-lg"
+              >
+                <Sparkles className="w-4 h-4" />
+                Fill Demo Portfolio
+              </button>
+              <button
                 onClick={() => navigate("/business/investments/create")}
-                className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-semibold rounded-lg hover:from-yellow-400 hover:to-yellow-500 transition-all flex items-center gap-2"
+                className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-semibold rounded-lg hover:from-yellow-400 hover:to-yellow-500 transition-all flex items-center gap-1.5 cursor-pointer text-sm"
               >
                 <PlusCircle className="w-4 h-4" />
                 Create New
@@ -368,12 +479,22 @@ const MyInvestmentPortfolioPage = () => {
                 ? "Try adjusting your search or filters"
                 : "You haven't created any investments yet"}
             </p>
-            <button
-              onClick={() => navigate("/business/investments/create")}
-              className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold rounded-xl hover:from-yellow-500 hover:to-yellow-600 transition-all"
-            >
-              Create Your First Investment
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={fillDemoPortfolio}
+                className="px-6 py-3 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/50 text-[#FFD700] font-semibold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-lg"
+              >
+                <Sparkles className="w-5 h-5" />
+                Fill Demo Portfolio
+              </button>
+              <button
+                onClick={() => navigate("/business/investments/create")}
+                className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold rounded-xl hover:from-yellow-500 hover:to-yellow-600 transition-all cursor-pointer"
+              >
+                Create Your First Investment
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, MapPin, Flag, User } from "lucide-react";
+import { Calendar, MapPin, Flag, User, Sparkles } from "lucide-react";
 
 interface KYCFormBasicProps {
   onSubmit: (data: any) => void;
@@ -36,15 +36,36 @@ export const KYCFormBasic: React.FC<KYCFormBasicProps> = ({
     onSubmit(formData);
   };
 
+  const fillDemoBasicKyc = () => {
+    setFormData({
+      fullName: "Dawit Haile",
+      dateOfBirth: "1988-04-12",
+      nationality: "Ethiopian",
+      address: "Bole Sub City, Road 04",
+      city: "Addis Ababa",
+      country: "Ethiopia",
+      postalCode: "1000",
+    });
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2">
-          Basic Information
-        </h2>
-        <p className="text-gray-400">
-          Provide your personal information for identity verification
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Basic Information
+          </h2>
+          <p className="text-gray-400">
+            Provide your personal information for identity verification
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={fillDemoBasicKyc}
+          className="px-4 py-2 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/50 text-[#FFD700] rounded-xl font-semibold text-xs transition-all flex items-center gap-1.5 self-start cursor-pointer shadow-lg"
+        >
+          <Sparkles size={14} /> Fill Demo KYC
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
