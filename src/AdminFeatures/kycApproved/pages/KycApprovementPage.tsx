@@ -4,7 +4,7 @@ import KycApprovement from '../components/KycApprovement';
 const KycApprovementPage = () => {
   return (
     <div>
-      <KycApprovement/>?
+      <KycApprovement />
     </div>
   );
 }
