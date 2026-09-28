@@ -1,22 +1,13 @@
 // pages/AdminKYCAllSubmissions.tsx
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllKYCSubmissions } from '../slices/kycAdminSlice';
-import KYCSubmissionCard from '../components/KYCSubmissionCard';
-import { KYCSubmission } from '../types/kyc.types';
+import React from "react";
 
 const AdminKYCAllSubmissions: React.FC = () => {
-  const dispatch = useDispatch();
-  const { allSubmissions, pagination, loading } = useSelector((state: any) => state.kycAdmin);
-  
-  const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6 text-white">All KYC Submissions</h1>
+      <p className="text-gray-400">KYC submissions management view.</p>
+    </div>
+  );
+};
 
-  useEffect(() => {
-    dispatch(fetchAllKYCSubmissions({ 
-      page: currentPage, 
-      limit: 20,
-      status: statusFilter !== 'all' ? statusFilter : undefined,
-      role
+export default AdminKYCAllSubmissions;
