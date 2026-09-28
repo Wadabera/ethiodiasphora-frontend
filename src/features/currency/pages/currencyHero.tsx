@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sparkles, Heart, Zap, Shield, Globe, Users, MapPin, Clock } from "lucide-react";
-import placeholderlogo from "../assets/currencyofplaceholder.jpeg";
+import placeholderlogo from "../assets/CurrencyofPlaceholder.jpeg";
 const currencyHero = () => {
   return (
     <div>

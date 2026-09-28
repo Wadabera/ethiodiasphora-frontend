@@ -17,7 +17,7 @@ import {
   mockCurrencyService,
 } from "../data/mockCurrencyData";
 import type{ Currency, CurrencyDetail } from "../types/currency.types";
-import placeholderlogo from "../assets/currencyofplaceholder.jpeg";
+import placeholderlogo from "../assets/CurrencyofPlaceholder.jpeg";
 
 const CurrencyPage: React.FC = () => {
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(
