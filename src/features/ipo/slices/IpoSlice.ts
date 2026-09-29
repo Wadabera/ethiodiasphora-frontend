@@ -49,15 +49,54 @@ const initialState: IpoState = {
   pagination: { page: 1, limit: 20, total: 0, pages: 1 },
 };
 
+// Helper to normalize IPO field variations from backend
+export const normalizeIpo = (raw: any): IPO => {
+  if (!raw) return raw;
+  const offerPrice = Number(raw.offerPrice ?? raw.pricePerShare ?? 0);
+  const lotSize = Math.max(1, Number(raw.lotSize ?? 1) || 1);
+  const minimumLot = Math.max(1, Number(raw.minimumLot ?? 1) || 1);
+  const maximumLot = Math.max(minimumLot, Number(raw.maximumLot ?? 1000) || 1000);
+  const minimumShares = raw.minimumShares ? Number(raw.minimumShares) : minimumLot * lotSize;
+  const maximumShares = raw.maximumShares ? Number(raw.maximumShares) : maximumLot * lotSize;
+  const totalShares = Number(raw.totalShares ?? 0);
+  const totalSubscribed = Number(raw.totalSubscribed ?? raw.totalSubscribedShares ?? 0);
+  const subscriptionRatio = raw.subscriptionRatio !== undefined
+    ? Number(raw.subscriptionRatio)
+    : (totalShares > 0 ? totalSubscribed / totalShares : 0);
+
+  return {
+    ...raw,
+    offerPrice,
+    pricePerShare: offerPrice,
+    lotSize,
+    minimumLot,
+    maximumLot,
+    minimumShares,
+    maximumShares,
+    totalShares,
+    totalSubscribed,
+    totalSubscribedShares: totalSubscribed,
+    raisedAmount: raw.raisedAmount !== undefined ? Number(raw.raisedAmount) : totalSubscribed * offerPrice,
+    subscriptionCount: Number(raw.subscriptionCount ?? raw.totalApplications ?? 0),
+    totalApplications: Number(raw.totalApplications ?? raw.subscriptionCount ?? 0),
+    oversubscriptionRate: Number((subscriptionRatio * 100).toFixed(2)),
+    closingDate: raw.closingDate || raw.endDate || raw.createdAt || new Date().toISOString(),
+    openingDate: raw.openingDate || raw.startDate || raw.createdAt || new Date().toISOString(),
+    status: raw.status || "open",
+  };
+};
+
 // ============ ASYNC THUNKS ============
 
 // 1️⃣ BROWSE IPOS - Public (Investor sees available IPOs)
 export const browseIpos = createAsyncThunk(
   "ipo/browse",
-  async (params: { page?: number; limit?: number; status?: string }) => {
+  async (params?: { page?: number; limit?: number; status?: string }) => {
     const response = await api.get("/api/v1/ipo/browse", { params });
+    const rawList = response.data.ipos || response.data.data || response.data;
+    const ipos = Array.isArray(rawList) ? rawList.map(normalizeIpo) : [];
     return {
-      ipos: response.data.ipos || response.data.data || response.data,
+      ipos,
       pagination: response.data.pagination,
     };
   },
@@ -68,7 +107,8 @@ export const fetchIpoById = createAsyncThunk(
   "ipo/fetchById",
   async (id: string) => {
     const response = await api.get(`/api/v1/ipo/${id}`);
-    return response.data.ipo || response.data.data || response.data;
+    const raw = response.data.ipo || response.data.data || response.data;
+    return normalizeIpo(raw);
   },
 );
 
@@ -81,7 +121,7 @@ export const createIpo = createAsyncThunk(
       const response = await api.post("/api/v1/ipo/create", ipoData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.ipo || response.data.data || response.data;
+      return normalizeIpo(response.data.ipo || response.data.data || response.data);
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to create IPO",
@@ -94,21 +134,41 @@ export const createIpo = createAsyncThunk(
 export const subscribeToIpo = createAsyncThunk(
   "ipo/subscribe",
   async (
-    { ipoId, shares }: { ipoId: string; shares: number },
+    payload: {
+      ipoId: string;
+      shares?: number;
+      quantity?: number;
+      lots?: number;
+      bidPrice?: number;
+      lotSize?: number;
+      offerPrice?: number;
+    },
     { rejectWithValue },
   ) => {
     try {
+      const lotSize = Math.max(1, payload.lotSize || 1);
+      let quantity = 1;
+      if (payload.quantity !== undefined && payload.quantity > 0) {
+        quantity = payload.quantity;
+      } else if (payload.lots !== undefined && payload.lots > 0) {
+        quantity = payload.lots;
+      } else if (payload.shares !== undefined && payload.shares > 0) {
+        quantity = Math.max(1, Math.round(payload.shares / lotSize));
+      }
+
+      const bidPrice = Number(payload.bidPrice ?? payload.offerPrice ?? 0);
+
       const token = localStorage.getItem("token");
       const response = await api.post(
-        `/api/v1/ipo/${ipoId}/subscribe`,
-        { shares },
+        `/api/v1/ipo/${payload.ipoId}/subscribe`,
+        { quantity, bidPrice },
         { headers: { Authorization: `Bearer ${token}` } },
       );
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Subscription failed",
-      );
+      const msg = error.response?.data?.message;
+      const errorMsg = Array.isArray(msg) ? msg.join(", ") : (msg || "Subscription failed");
+      return rejectWithValue(errorMsg);
     }
   },
 );
@@ -339,8 +399,9 @@ const ipoSlice = createSlice({
 
         // Update IPO subscription count
         if (state.selectedIpo) {
-          state.selectedIpo.subscriptionCount += 1;
-          state.selectedIpo.totalSubscribedShares += action.payload.shares;
+          state.selectedIpo.subscriptionCount = (state.selectedIpo.subscriptionCount || 0) + 1;
+          const addedShares = Number(action.payload?.quantity || action.payload?.shares || 0);
+          state.selectedIpo.totalSubscribedShares = (state.selectedIpo.totalSubscribedShares || 0) + addedShares;
         }
       })
       .addCase(subscribeToIpo.rejected, (state, action) => {

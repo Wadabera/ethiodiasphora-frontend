@@ -266,8 +266,8 @@ export const subscribeToIPO = createAsyncThunk(
       );
 
       const response = await api.post(`/api/v1/ipo/${data.ipoId}/subscribe`, {
-        quantity: data.quantity,
-        bidPrice: data.bidPrice,
+        quantity: Math.max(1, Number(data.quantity || 1)),
+        bidPrice: Number(data.bidPrice || 10),
       });
 
       console.log("📡 Subscribe Response:", response.data);

@@ -2,69 +2,102 @@
 export interface IPO {
   _id: string;
   companyName: string;
-  companyId: string;
-  businessOwnerId: string;
+  companyId?: string;
+  businessOwnerId?: string;
+  createdBy?: string;
 
   // IPO Details
   symbol: string;
   totalShares: number;
-  pricePerShare: number;
-  minimumShares: number;
+  pricePerShare?: number;
+  offerPrice?: number;
+  lotSize?: number;
+  minimumLot?: number;
+  maximumLot?: number;
+  minimumShares?: number;
   maximumShares?: number;
+  faceValue?: number;
 
   // Financials
-  totalValue: number;
-  raisedAmount: number;
+  totalValue?: number;
+  issueSize?: number;
+  raisedAmount?: number;
 
   // Dates
-  openingDate: string;
-  closingDate: string;
+  openingDate?: string;
+  closingDate?: string;
+  startDate?: string;
+  endDate?: string;
   listingDate?: string;
 
   // Status
-  status: "pending" | "approved" | "open" | "closed" | "allotted" | "listed";
+  status: "pending" | "pending_approval" | "approved" | "announced" | "open" | "closed" | "allotted" | "listed" | "rejected";
 
   // Documents
-  prospectus: string;
-  financialReports: string[];
+  prospectus?: string;
+  prospectusUrl?: string;
+  financialReports?: string[];
 
   // Statistics
-  subscriptionCount: number;
-  totalSubscribedShares: number;
-  oversubscriptionRate: number;
-  allotmentRatio?: number;
+  subscriptionCount?: number;
+  totalApplications?: number;
+  totalSubscribed?: number;
+  totalSubscribedShares?: number;
+  oversubscriptionRate?: number;
+  subscriptionRatio?: number;
+  allotmentRatio?: string | number;
 
-  createdAt: string;
-  updatedAt: string;
+  sector?: string;
+  industry?: string;
+  description?: string;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface IPOSubscription {
   _id: string;
   ipoId: string;
-  investorId: string;
-  investorName: string;
+  userId?: string;
+  investorId?: string;
+  investorName?: string;
+  symbol?: string;
+  companyName?: string;
 
   // Subscription Details
-  requestedShares: number;
-  requestedAmount: number;
+  quantity?: number;
+  lots?: number;
+  pricePerShare?: number;
+  totalAmount?: number;
+  requestedShares?: number;
+  requestedAmount?: number;
 
   // Allotment Results
-  allottedShares: number;
-  allottedAmount: number;
-  refundAmount: number;
+  allottedShares?: number;
+  allottedAmount?: number;
+  refundAmount?: number;
 
-  status: "pending" | "allotted" | "refunded";
-  subscriptionDate: string;
+  status: "pending" | "allotted" | "refunded" | "approved" | "rejected";
+  applicationNumber?: string;
+  subscriptionDate?: string;
+  createdAt?: string;
 }
 
 export interface IPOCreateDTO {
   companyName: string;
   symbol: string;
   totalShares: number;
-  pricePerShare: number;
-  minimumShares: number;
+  pricePerShare?: number;
+  offerPrice?: number;
+  minimumShares?: number;
   maximumShares?: number;
-  openingDate: string;
-  closingDate: string;
-  prospectus: string;
+  minimumLot?: number;
+  maximumLot?: number;
+  lotSize?: number;
+  openingDate?: string;
+  closingDate?: string;
+  startDate?: string;
+  endDate?: string;
+  prospectus?: string;
+  prospectusUrl?: string;
 }

@@ -52,8 +52,8 @@ export const SubscribeIPOForm: React.FC<Props> = ({
     e.preventDefault();
     onSubmit({
       ipoId: ipo._id,
-      quantity,
-      bidPrice: useBidPrice ? bidPrice : undefined,
+      quantity: lots,
+      bidPrice: useBidPrice ? bidPrice : ipo.offerPrice,
     });
   };
 
